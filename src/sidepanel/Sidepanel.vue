@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { storageDemo } from '~/logic/storage'
+import { tomationStorage } from '~/logic/storage'
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
@@ -10,13 +10,12 @@ function openOptionsPage() {
   <main class="w-full px-4 py-5 text-center text-gray-700">
     <h3>Tomation Web Extension</h3>
     <div>Sidepanel</div>
-    <SharedSubtitle />
 
     <button class="btn mt-2" @click="openOptionsPage">
       Open Options
     </button>
     <div class="mt-2">
-      <span class="opacity-50">Storage:</span> {{ storageDemo }}
+      <span class="opacity-50">Script URL:</span> {{ tomationStorage.scriptURL }}
     </div>
   </main>
 </template>

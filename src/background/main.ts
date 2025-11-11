@@ -1,5 +1,6 @@
-import { onMessage, sendMessage } from 'webext-bridge/background'
-import type { Tabs } from 'webextension-polyfill'
+/* eslint-disable no-console */
+import { onMessage } from 'webext-bridge/background'
+import { tomationStorage, tomationStorageReady } from '~/logic/storage'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -21,45 +22,31 @@ if (USE_SIDE_PANEL) {
 }
 
 browser.runtime.onInstalled.addListener((): void => {
-  // eslint-disable-next-line no-console
   console.log('Extension installed')
 })
 
-let previousTabId = 0
+onMessage('content-to-background', async ({ data, sender }) => {
+  console.info('[tomation-webext][background] got content-to-background', data, sender)
 
-// communication example: send previous tab title from background page
-// see shim.d.ts for type declaration
-browser.tabs.onActivated.addListener(async ({ tabId }) => {
-  if (!previousTabId) {
-    previousTabId = tabId
-    return
+  if ((data as any).message === 'getStorage') {
+    return await tomationStorageReady.then(async () => {
+      console.log('Storage ready in background:', tomationStorage.value)
+      return tomationStorage.value
+    })
   }
 
-  let tab: Tabs.Tab
-
-  try {
-    tab = await browser.tabs.get(previousTabId)
-    previousTabId = tabId
-  }
-  catch {
-    return
-  }
-
-  // eslint-disable-next-line no-console
-  console.log('previous tab', tab)
-  sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
+  // return something serializable
+  return { ok: true }
 })
 
-onMessage('get-current-tab', async () => {
-  try {
-    const tab = await browser.tabs.get(previousTabId)
-    return {
-      title: tab?.title,
-    }
+onMessage('options-to-background', async ({ data, sender }) => {
+  console.info('[tomation-webext][background] got options-to-background', data, sender)
+
+  if ((data as any).message === 'saveScriptURL') {
+    tomationStorage.value.scriptURL = (data as any).url
+
+    console.log('[tomation-webext][background] Saved script URL to storage:', tomationStorage.value.scriptURL)
   }
-  catch {
-    return {
-      title: undefined,
-    }
-  }
+  // return something serializable
+  return { ok: true }
 })
