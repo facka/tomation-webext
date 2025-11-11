@@ -8,7 +8,7 @@ function openOptionsPage() {
 
 <template>
   <main class="w-full px-4 py-5 text-center text-gray-700">
-    <Logo />
+    <h3>Tomation Web Extension</h3>
     <div>Sidepanel</div>
     <SharedSubtitle />
 
