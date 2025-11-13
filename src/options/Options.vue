@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/* eslint-disable no-console */
 import { sendMessage } from 'webext-bridge/options'
 import logo from '~/assets/icon.png'
 import { tomationStorage, tomationStorageReady } from '~/logic/storage'
@@ -49,11 +48,6 @@ async function onSave() {
           Save
         </button>
       </form>
-    </div>
-    <!-- <input v-model="storageDemo" class="border border-gray-400 rounded px-2 py-1 mt-2"> -->
-
-    <div class="mt-4">
-      Powered by Vite <pixelarticons-zap class="align-middle inline-block" />
     </div>
   </main>
 </template>
