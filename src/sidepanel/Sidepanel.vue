@@ -1,20 +1,35 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { sendMessage } from 'webext-bridge/popup'
 import AutomatedTests from '../components/AutomatedTests.vue'
 import TaskExecutionViewer from '../components/TaskExecutionViewer.vue'
 import ActionViewer from '../components/ActionViewer.vue'
 import History from '../components/History.vue'
 import { useAutomationStore } from './automation-store'
 import { tomationStorage } from '~/logic/storage'
+import { useActiveTab } from '~/composables/useActiveTab'
+import UrlStatus from '~/components/UrlStatus.vue'
 
-const store = useAutomationStore()
-
-onMounted(() => {
-  store.refreshData()
-})
+const sidepanelStore = useAutomationStore()
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
+}
+
+function closeTaskExecutionViewer() {
+  tomationStorage.value.view = 'MAIN'
+}
+
+function goTo(view: string) {
+  tomationStorage.value.view = view
+}
+
+async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error') {
+  console.log('URL Status changed: ', status)
+  // when status is OK we should refresh the page
+  const activeTab = await useActiveTab().getActiveTab()
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'refresh-page',
+  }, activeTab.destination)
 }
 </script>
 
@@ -26,36 +41,31 @@ function openOptionsPage() {
     </button>
     <div class="mt-2">
       <span class="opacity-50">Script URL:</span> {{ tomationStorage.scriptURL }}
+      <UrlStatus :url="tomationStorage.scriptURL" class="ml-2" @status="handleStatusChange" />
     </div>
-    <div v-if="!store.loading" class="mt-2">
-      <div v-if="store.runningTask || !store.closedRunView">
-        <TaskExecutionViewer :action="store.initialAction" @@close="store.closeTaskExecutionViewer" />
+    <div v-if="tomationStorage.scriptURL">
+      <div v-if="tomationStorage.view === 'VIEWER'">
+        <TaskExecutionViewer :action="sidepanelStore.initialAction" @@close="closeTaskExecutionViewer" />
       </div>
-      <div v-else-if="store.view === 'MAIN'">
-        <AutomatedTests :tests="store.automatedTests" class="mt-2" />
+      <div v-else-if="tomationStorage.view === 'MAIN'">
+        <AutomatedTests :tests="tomationStorage.automatedTests" class="mt-2" />
         <History class="mt-2" />
       </div>
-      <div v-else-if="store.view === 'TEST'">
+      <div v-else-if="tomationStorage.view === 'TEST'">
         <div class="flex">
           <div class="w-11/12 font-bold">
             <div>Test inspector</div>
           </div>
           <div class="grow flex flex-row-reverse">
-            <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="store.goTo('MAIN')">
+            <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo('MAIN')">
               <font-awesome-icon icon="fa-solid fa-times" />
             </button>
           </div>
         </div>
         <div>
-          <ActionViewer :action="store.viewParams?.action" />
+          <ActionViewer :action="tomationStorage.viewParams?.action" />
         </div>
       </div>
-    </div>
-    <div v-else-if="!store.dataError">
-      Loading...
-    </div>
-    <div v-else>
-      No data
     </div>
   </main>
 </template>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { sendMessage } from 'webext-bridge/popup'
 import ExpandableSection from '../design-system/ExpandableSection.vue'
-import { useAutomationStore } from '../sidepanel/automation-store'
 import AutomatedTestsTreeNode from './AutomatedTestsTreeNode.vue'
+import { useActiveTab } from '~/composables/useActiveTab'
 
 const props = defineProps<{
   tests: any
@@ -10,9 +11,8 @@ const props = defineProps<{
 
 const query = ref('')
 
-const store = useAutomationStore()
-const testsList = computed(() => Object.keys(props.tests))
-const filteredPaths = computed(() => testsList.value.filter(path => path.toLocaleLowerCase().includes(query.value.toLocaleLowerCase().trim())))
+const testsList = computed(() => (props.tests && Object.keys(props.tests)) || [])
+const filteredPaths = computed(() => testsList.value.filter((path: any) => path.toLocaleLowerCase().includes(query.value.toLocaleLowerCase().trim())))
 const sortedPaths = computed(() => filteredPaths.value.toSorted())
 const testsTree = computed(() => {
   return buildTree(sortedPaths.value)
@@ -54,8 +54,18 @@ function addToTree(node: TreeNode, path: string, pathParts: string[]): void {
   addToTree(childNode, path.length ? `${path}/${currentPart}` : currentPart, remainingParts)
 }
 
-function reloadTests() {
-  store.reloadTests()
+async function reloadTests() {
+  console.log('Reload tests')
+  const activeTab = (await useActiveTab().getActiveTab()).destination
+  try {
+    await sendMessage('sidepanel-to-contentScript', {
+      cmd: 'reload-tests-request',
+      params: {},
+    }, activeTab)
+  }
+  catch (error) {
+    console.error('Error reloading tests:', error)
+  }
 }
 </script>
 

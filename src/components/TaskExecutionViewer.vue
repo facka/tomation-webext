@@ -20,7 +20,11 @@ function closeRunView() {
 
 async function runAction(action: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage(action, {}, activeTab)
+  // sendMessage(action, {}, activeTab)
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: action,
+    params: {},
+  }, activeTab)
 }
 </script>
 
@@ -47,7 +51,7 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Next"
-        @click="runAction('next-test')"
+        @click="runAction('next-step-request')"
       >
         <font-awesome-icon icon="fa-solid fa-forward-step" />
       </button>
@@ -74,6 +78,9 @@ async function runAction(action: string) {
     </div>
   </header>
   <main class="relative mt-1">
-    <ActionViewer :action="action" />
+    <ActionViewer v-if="action" :action="action" />
+    <div v-else>
+      No initial action defined
+    </div>
   </main>
 </template>

@@ -3,68 +3,88 @@ import { computed } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
 import { ACTION_STATUS } from 'tomation'
 import Expandable from '../design-system/Expandable.vue'
-import { useAutomationStore } from '../sidepanel/automation-store'
 import { useActiveTab } from '~/composables/useActiveTab'
+import { useAutomationStore } from '~/sidepanel/automation-store'
 
 const props = defineProps<{
   action: any
 }>()
 
-const store = useAutomationStore()
+const sidepanelStore = useAutomationStore()
 
-const action = computed(() => props.action)
+watch(props.action, (newAction) => {
+  console.log('ActionViewer: action updated: ', newAction)
+}, { immediate: true })
+
+const action = computed(() => props.action || {})
 
 const status = computed(() => {
-  return store.getActionById(action.value.id)?.status || ACTION_STATUS.WAITING
+  return (sidepanelStore.getActionById(action.value.id)?.status) || ACTION_STATUS.WAITING
 })
 const error = computed(() => {
-  return store.getActionById(action.value.id)?.error || ''
+  return (sidepanelStore.getActionById(action.value.id)?.error) || ''
 })
 const context = computed(() => {
-  return store.getActionById(action.value.id)?.context || {}
+  return (sidepanelStore.getActionById(action.value.id)?.context) || {}
 })
 const tries = computed(() => {
-  return store.getActionById(action.value.id)?.tries
+  return (sidepanelStore.getActionById(action.value.id)?.tries) || 0
 })
 
 async function displayHTML() {
+  /*
+  TODO fix event and implement in content script
+
   const activeTab = (await useActiveTab().getActiveTab()).destination
   sendMessage('displayActionContext', {
     context: context.value,
-  }, activeTab)
+  }, activeTab)}
+  */
 }
 
 async function userAccepted() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('user-accept', {
-    context: context.value,
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'user-accept-request',
+    params: {
+      context: context.value,
+    },
   }, activeTab)
 }
 
 async function userRejected() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('user-reject', {
-    context: context.value,
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'user-reject-request',
+    params: {
+      context: context.value,
+    },
   }, activeTab)
 }
 
 async function skipAction() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('skip-action', {
-    context: context.value,
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'skip-action-request',
+    params: {
+      context: context.value,
+    },
   }, activeTab)
 }
 
 async function retryAction() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('retry-action', {
-    context: context.value,
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'retry-action-request',
+    params: {
+      context: context.value,
+    },
   }, activeTab)
 }
 </script>
 
 <template>
-  <div v-if="action?.type === 'Action'" class="mt-1">
+  <div v-if="action?.type === 'Action'" class="mt-1 text-left">
     <Expandable expanded>
       <template #header>
         <div class="flex">

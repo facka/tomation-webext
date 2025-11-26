@@ -1,6 +1,6 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import browser from 'webextension-polyfill'
-import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
+// import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
 import { tomationStorage, tomationStorageReady } from '~/logic/storage'
 import { useActiveTab } from '~/composables/useActiveTab'
 
@@ -27,14 +27,114 @@ browser.runtime.onInstalled.addListener((): void => {
   console.log('Extension installed')
 })
 
-onMessage('content-to-background', async ({ data, sender }) => {
-  console.info('[tomation-webext][background] got content-to-background', data, sender)
+onMessage('content-to-background', async ({ data }) => {
+  // console.info('[tomation-webext][background] got content-to-background', data, sender)
 
-  if ((data as any).message === 'getStorage') {
+  if ((data as any).message === 'getStorage') { // TODO migrate to use cmd/params
     return await tomationStorageReady.then(async () => {
       console.log('Storage ready in background:', tomationStorage.value)
       return tomationStorage.value
     })
+  }
+
+  const { cmd, params } = (data as any) || {}
+  const commands: Record<string, (params?: any) => void> = {
+    'tomation-test-started': async (params: any) => {
+      return await tomationStorageReady.then(async () => {
+        browser.action.setBadgeText({ text: 'ON' })
+        browser.action.setBadgeBackgroundColor({ color: '#33BB33' })
+
+        console.log('[tomation-webext][background] Test started:', params.action)
+        const initialAction = params.action
+
+        tomationStorage.value.actionsById = {}
+        //  Clear actionsById
+        // Object.keys(actionsById).forEach(id => delete actionsById[id])
+
+        tomationStorage.value.initialAction = params.action
+        extractActions(tomationStorage.value.initialAction)
+
+        tomationStorage.value.view = 'VIEWER'
+        Object.keys(tomationStorage.value.memory).forEach(id => delete tomationStorage.value.memory[id])
+
+        tomationStorage.value.currentRunningTest = {
+          result: null,
+          startedAt: new Date(),
+          finishedAt: null,
+          action: { ...initialAction },
+        }
+        tomationStorage.value.history.push(tomationStorage.value.currentRunningTest)
+        // sendMessage('tomation-test-started', params, 'sidepanel')
+        sendMessage('tomation-test-started', params, 'popup') // TODO implement listener in sidebar
+      })
+    },
+    'tomation-action-update': async (params: any) => {
+      return await tomationStorageReady.then(async () => {
+        console.log('[tomation-webext][background] action-update received in background:', params)
+        const existing = tomationStorage.value.actionsById[params.action.id]
+        if (!existing) {
+          // store a shallow clone to ensure reactivity tracks the new object
+          tomationStorage.value.actionsById[params.action.id] = { ...params.action }
+        }
+        else {
+          // replace the whole action object to trigger reactivity instead of mutating it in place
+          tomationStorage.value.actionsById[params.action.id] = {
+            ...existing,
+            status: params.action.status,
+            error: params.action.errors ?? params.action.error ?? existing.error,
+            value: params.action.context ?? existing.value,
+            tries: params.action.tries ?? existing.tries,
+          }
+        }
+        // forward update to sidepanel and popup
+        // sendMessage('tomation-action-updated', params, 'sidepanel')
+        sendMessage('tomation-action-update', params, 'popup') // TODO implement listener in sidebar
+      })
+    },
+    'tomation-test-stop': () => {
+      console.log('[tomation-webext][background] Test stopped')
+      browser.action.setBadgeText({ text: '' })
+      tomationStorage.value.view = 'MAIN'
+    },
+    'tomation-save-value': (params: any) => {
+      console.log('[tomation-webext][background] save-value', params)
+      tomationStorage.value.memory[params.memorySlotName] = params.value
+    },
+    'tomation-read-memory': async (params: any) => {
+      console.log('[tomation-webext][background] read-memory', params)
+      const activeTab = (await useActiveTab().getActiveTab()).destination
+      sendMessage('read-memory-response', tomationStorage.value.memory[params.memorySlotName], activeTab)
+    },
+    'tomation-register-test': async (params: any) => {
+      return await tomationStorageReady.then(async () => {
+        console.log(`Registering test. Message = `, params)
+        tomationStorage.value.automatedTests[params.id] = {
+          lastResult: 'UNDEFINED',
+          action: params.action,
+        }
+      })
+    },
+    'tomation-test-passed': (params: any) => {
+      console.log(`Marking test as PASSED. Message = `, params)
+      tomationStorage.value.automatedTests[params.id].lastResult = 'PASSED'
+      tomationStorage.value.currentRunningTest.result = 'PASSED'
+    },
+    'tomation-test-failed': (params: any) => {
+      console.log(`Marking test as FAILED. Message = `, params)
+      tomationStorage.value.automatedTests[params.id].lastResult = 'FAILED'
+      tomationStorage.value.currentRunningTest.result = 'FAILED'
+    },
+    'tomation-test-end': (params: any) => {
+      console.log(`Test ended. Message = `, params)
+      tomationStorage.value.currentRunningTest.finishedAt = new Date()
+    },
+  }
+
+  if (commands[cmd]) {
+    commands[cmd](params)
+  }
+  else {
+    console.warn(`[tomation-webext][background] Unknown cmd received from content script: ${cmd}`, params)
   }
 
   // return something serializable
@@ -55,104 +155,27 @@ onMessage('options-to-background', async ({ data, sender }) => {
 
 // --------------------------------
 
-interface ObjectLiteral {
-  [key: string]: any
-}
-
 console.log('Running background...')
-
-let runningTask = false
-let closedRunView = true
-let initialAction: any = null
-const actionsById: ObjectLiteral = {}
-const memory: ObjectLiteral = {}
-const automatedTests: ObjectLiteral = {}
-const history: any[] = []
-let currentRunningTest: any = {}
 
 function extractActions(action: any) {
   if (action.steps) {
     action.steps.forEach((action: any) => extractActions(action))
-    actionsById[action.id] = action
   }
-  else {
-    actionsById[action.id] = action
-  }
+  tomationStorage.value.actionsById[action.id] = action
 }
-
-onMessage('start', async ({ data }: any) => {
-  browser.action.setBadgeText({ text: 'ON' })
-  browser.action.setBadgeBackgroundColor({ color: '#33BB33' })
-
-  /* Sidepanel only open with user actions
-  const activeTab = await useActiveTab().getActiveTab()
-  browser.sidePanel.setOptions({
-    tabId: activeTab.tab.id,
-    path: './dist/popup/index.html',
-    enabled: true,
-  })
-  browser.sidePanel.open({ tabId: activeTab.tab.id })
-  */
-
-  //  Clear actionsById
-  Object.keys(actionsById).forEach(id => delete actionsById[id])
-  runningTask = true
-  closedRunView = false
-  Object.keys(memory).forEach(id => delete memory[id])
-  initialAction = data.action
-  extractActions(initialAction)
-})
-
-onMessage('end', ({ data }: any) => {
-  browser.action.setBadgeText({ text: '' })
-  runningTask = false
-  if (data.action.error.includes('Test stopped manually')) {
-    closedRunView = true
-  }
-})
-
-onMessage('stop-test', () => {
-  browser.action.setBadgeText({ text: '' })
-  runningTask = false
-  closedRunView = true
-})
-
-onMessage('action-update', ({ data }: any) => {
-  const action = actionsById[data.action.id]
-  if (!action) {
-    actionsById[data.action.id] = data.action
-  }
-  else {
-    action.status = data.action.status
-    action.error = data.action.errors
-    action.tries = data.action.tries
-  }
-})
-
-onMessage('save-value', ({ data }: any) => {
-  memory[data.memorySlotName] = data.value
-})
-
-onMessage('read-memory', async ({ data }: any) => {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('read-memory-response', memory[data.memorySlotName], activeTab)
-})
 
 onMessage('close-run-view', () => {
   console.log('Task viewer closed!')
-  closedRunView = true
-  runningTask = false
+  tomationStorage.value.view = 'MAIN'
 })
-
+/*
 addOnChunkedMessageListener(async (message: string, sender: any, sendResponse: any) => {
   if (message === 'get-large-data') {
     const largeResponse = JSON.stringify({
-      closedRunView,
-      initialAction,
-      actionsById,
-      runningTask,
-      automatedTests,
-      history,
+      initialAction: tomationStorage.value.initialAction,
+      actionsById: tomationStorage.value.actionsById,
+      automatedTests: tomationStorage.value.automatedTests,
+      history: tomationStorage.value.history,
     })
 
     sendChunkedResponse({
@@ -162,46 +185,4 @@ addOnChunkedMessageListener(async (message: string, sender: any, sendResponse: a
 
   return true // async listener
 })
-
-onMessage('register-test', ({ data }: any) => {
-  console.log(`Registering test. Message = `, data)
-  automatedTests[data.id] = {
-    lastResult: 'UNDEFINED',
-    action: data.action,
-  }
-})
-
-onMessage('test-started', ({ data }: any) => {
-  const initialAction = data.action
-  currentRunningTest = {
-    result: null,
-    startedAt: new Date(),
-    finishedAt: null,
-    action: { ...initialAction },
-  }
-  history.push(currentRunningTest)
-})
-
-onMessage('test-passed', ({ data }: any) => {
-  automatedTests[data.id].lastResult = 'PASSED'
-  currentRunningTest.result = 'PASSED'
-})
-
-onMessage('test-failed', ({ data }: any) => {
-  automatedTests[data.id].lastResult = 'FAILED'
-  currentRunningTest.result = 'FAILED'
-})
-
-onMessage('test-end', () => {
-  currentRunningTest.finishedAt = new Date()
-})
-
-onMessage('reload-test', async () => {
-  /* if (data.action === 'reload-test') {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
-    browser.tabs.sendMessage(tab.id || browser.tabs.TAB_ID_NONE, {
-      action: 'reload-tests',
-      params: {},
-    })
-  } */
-})
+*/

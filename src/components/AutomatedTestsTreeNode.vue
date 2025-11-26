@@ -2,13 +2,12 @@
 import { computed, toRaw } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '../design-system/Expandable.vue'
-import { useAutomationStore } from '../sidepanel/automation-store'
 import { useActiveTab } from '~/composables/useActiveTab'
+import { tomationStorage } from '~/logic/storage'
 
 const props = defineProps<{
   node: TreeNode
 }>()
-const store = useAutomationStore()
 const node = computed(() => props.node)
 const testId = computed(() => {
   if (node.value.path) {
@@ -27,16 +26,25 @@ interface TreeNode {
 
 async function runTest(testId: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('run-test', {
-    id: testId,
+  console.log('Run test Request: ', testId)
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'run-test-request',
+    params: {
+      testId,
+    },
   }, activeTab)
 }
 
+function goTo(view: string, viewParams: any = {}) {
+  tomationStorage.value.view = view
+  tomationStorage.value.viewParams = viewParams
+}
+
 function openTest() {
-  const action = store.automatedTests[testId.value].action
+  const action = tomationStorage.value.automatedTests[testId.value].action
   console.log('Open Test: ', toRaw(action))
   if (action) {
-    store.goTo('TEST', { action })
+    goTo('TEST', { action })
   }
 }
 </script>

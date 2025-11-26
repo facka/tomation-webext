@@ -1,22 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import ExpandableSection from '../design-system/ExpandableSection.vue'
-import { useAutomationStore } from '../sidepanel/automation-store'
-
-const store = useAutomationStore()
-const history: Ref<any[]> = ref([])
-
-onMounted(() => {
-  history.value = store.getHistory()
-})
+import { tomationStorage } from '~/logic/storage'
 
 function clearHistory() {
-  store.clearHistory()
+  tomationStorage.value.history.value.length = 0
+}
+
+function goTo(view: string, viewParams: any = {}) {
+  tomationStorage.value.view = view
+  tomationStorage.value.viewParams = viewParams
 }
 
 function openTest(action: any) {
-  store.goTo('TEST', {
+  goTo('TEST', {
     action,
   })
 }
@@ -25,15 +22,15 @@ function openTest(action: any) {
 <template>
   <ExpandableSection title="History" :loading="false">
     <template #summary>
-      <div v-show="history.length">
-        Total {{ history.length }}
+      <div v-show="tomationStorage.history.length">
+        Total {{ tomationStorage.history?.length || 0 }}
       </div>
     </template>
     <div
-      v-for="(elem, index) in history"
+      v-for="(elem, index) in tomationStorage.history"
       :key="index"
       class="flex border-b-2 border-gray-200"
-      :class="{ 'pb-2': index === (history.length - 1) }"
+      :class="{ 'pb-2': index === (tomationStorage.history?.length - 1) }"
     >
       <span
         class="grow cursor-pointer"
@@ -47,7 +44,7 @@ function openTest(action: any) {
         <font-awesome-icon v-if="elem?.result === 'FAILED'" class="text-red-600" icon="fa-solid fa-times" />
       </div>
     </div>
-    <div v-if="!history.length">
+    <div v-if="!tomationStorage.history?.length">
       No tests run yet
     </div>
     <div v-else>
