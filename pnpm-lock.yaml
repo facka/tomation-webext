@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       tomation:
-        specifier: ^0.0.1
-        version: 0.0.1
+        specifier: ^0.0.3
+        version: 0.0.3
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^2.27.0
@@ -4135,8 +4135,8 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
-  tomation@0.0.1:
-    resolution: {integrity: sha512-DdONeIpDCDJ1GLRFY7fKlTmLdyhi2Dx0ihyCZhLpY+AS77lVu/Acd8MNgb32g3dcqEcEuCFpDjs7bqy9CXhSLA==}
+  tomation@0.0.3:
+    resolution: {integrity: sha512-frcSBuTCojglqx5PL4rsm+EviPN/Ri5CCjccJRyFaDQruHANjOpMaODFe1ocIs4Pm1xO7hFZDzT4ALDWiFyC1A==}
 
   toml-eslint-parser@0.10.0:
     resolution: {integrity: sha512-khrZo4buq4qVmsGzS5yQjKe/WsFvV8fGfOjDQN0q4iy9FjRfPWRgTFrU8u1R2iu/SfWLhY9WnCi4Jhdrcbtg+g==}
@@ -9013,7 +9013,7 @@ snapshots:
     dependencies:
       is-number: 7.0.0
 
-  tomation@0.0.1:
+  tomation@0.0.3:
     dependencies:
       uuid: 9.0.1
 
