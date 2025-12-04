@@ -14,7 +14,11 @@ export async function getManifest() {
     version: pkg.version,
     description: pkg.description,
     action: {
-      default_icon: 'assets/icon.png',
+      default_icon: {
+        16: 'assets/icon.png',
+        48: 'assets/icon.png',
+        128: 'assets/icon.png',
+      },
       default_popup: 'dist/popup/index.html',
     },
     options_ui: {
