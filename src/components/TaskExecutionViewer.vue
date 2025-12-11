@@ -44,7 +44,7 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Play"
-        @click="runAction('continue-test')"
+        @click="runAction('continue-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-play" />
       </button>
@@ -58,14 +58,14 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Pause"
-        @click="runAction('pause-test')"
+        @click="runAction('pause-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-pause" />
       </button>
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Stop"
-        @click="runAction('stop-test')"
+        @click="runAction('stop-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-stop" />
       </button>
