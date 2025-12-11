@@ -31,7 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "tomation": "^0.0.3"
+    "tomation": "^0.0.4"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.0",
