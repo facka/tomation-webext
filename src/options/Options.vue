@@ -14,7 +14,7 @@ onMounted(async () => {
   })
 })
 
-async function sendToBackground(payload: any = { hello: 'background' }) {
+async function sendToBackground(payload: any) {
   try {
     const resp = await sendMessage('options-to-background', payload)
     console.info('[tomation-webext] Sent message to background', resp)
@@ -26,7 +26,7 @@ async function sendToBackground(payload: any = { hello: 'background' }) {
 }
 
 async function onSave() {
-  await sendToBackground({ message: 'saveScriptURL', url: url.value.trim() })
+  await sendToBackground({ cmd: 'save-script-URL', params: { url: url.value.trim() } })
 }
 </script>
 

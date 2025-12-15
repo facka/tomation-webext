@@ -33,7 +33,7 @@ function injectFromURL(url: string | undefined) {
 (async () => {
   console.info('[tomation-webext] Running content script...')
 
-  const tomationStorage = await sendToBackground({ message: 'getStorage' })
+  const tomationStorage = await sendToBackground({ cmd: 'get-storage' })
   console.log(`[tomation-webext] Storage `, tomationStorage)
 
   try {

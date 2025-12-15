@@ -3,6 +3,7 @@ import browser from 'webextension-polyfill'
 // import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
 import { tomationStorage, tomationStorageReady } from '~/logic/storage'
 import { useActiveTab } from '~/composables/useActiveTab'
+import { VIEWS } from '~/logic/views'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -30,15 +31,14 @@ browser.runtime.onInstalled.addListener((): void => {
 onMessage('content-to-background', async ({ data }) => {
   // console.info('[tomation-webext][background] got content-to-background', data, sender)
 
-  if ((data as any).message === 'getStorage') { // TODO migrate to use cmd/params
-    return await tomationStorageReady.then(async () => {
-      console.log('Storage ready in background:', tomationStorage.value)
-      return tomationStorage.value
-    })
-  }
-
   const { cmd, params } = (data as any) || {}
   const commands: Record<string, (params?: any) => void> = {
+    'get-storage': async () => {
+      return await tomationStorageReady.then(async () => {
+        console.log('Storage ready in background (content script request):', tomationStorage.value)
+        return tomationStorage.value
+      })
+    },
     'tomation-test-started': async (params: any) => {
       return await tomationStorageReady.then(async () => {
         browser.action.setBadgeText({ text: 'ON' })
@@ -65,7 +65,7 @@ onMessage('content-to-background', async ({ data }) => {
         }
         tomationStorage.value.history.push(tomationStorage.value.currentRunningTest)
         // sendMessage('tomation-test-started', params, 'sidepanel')
-        sendMessage('tomation-test-started', params, 'popup') // TODO implement listener in sidebar
+        sendMessage('background-to-popup', { cmd: 'tomation-test-started', params }, 'popup')
       })
     },
     'tomation-action-update': async (params: any) => {
@@ -88,7 +88,7 @@ onMessage('content-to-background', async ({ data }) => {
         }
         // forward update to sidepanel and popup
         // sendMessage('tomation-action-updated', params, 'sidepanel')
-        sendMessage('tomation-action-update', params, 'popup') // TODO implement listener in sidebar
+        sendMessage('background-to-popup', { cmd: 'tomation-action-update', params }, 'popup')
       })
     },
     'tomation-test-stop': () => {
@@ -131,7 +131,7 @@ onMessage('content-to-background', async ({ data }) => {
   }
 
   if (commands[cmd]) {
-    commands[cmd](params)
+    return await commands[cmd](params)
   }
   else {
     console.warn(`[tomation-webext][background] Unknown cmd received from content script: ${cmd}`, params)
@@ -143,11 +143,18 @@ onMessage('content-to-background', async ({ data }) => {
 
 onMessage('options-to-background', async ({ data, sender }) => {
   console.info('[tomation-webext][background] got options-to-background', data, sender)
-
-  if ((data as any).message === 'saveScriptURL') {
-    tomationStorage.value.scriptURL = (data as any).url
-
-    console.log('[tomation-webext][background] Saved script URL to storage:', tomationStorage.value.scriptURL)
+  const { cmd, params } = (data as any) || {}
+  const commands: Record<string, (params?: any) => void> = {
+    'save-script-URL': (params: any) => {
+      tomationStorage.value.scriptURL = params.url
+      console.log('[tomation-webext][background] Saved script URL to storage:', tomationStorage.value.scriptURL)
+    },
+  }
+  if (commands[cmd]) {
+    commands[cmd](params)
+  }
+  else {
+    console.warn(`[tomation-webext][background] Unknown cmd received from options: ${cmd}`, params)
   }
   // return something serializable
   return { ok: true }
@@ -164,9 +171,29 @@ function extractActions(action: any) {
   tomationStorage.value.actionsById[action.id] = action
 }
 
-onMessage('close-run-view', () => {
-  console.log('Task viewer closed!')
-  tomationStorage.value.view = 'MAIN'
+onMessage('popup-to-background', ({ data }) => {
+  const { cmd, params } = (data as any) || {}
+  console.log('[tomation-webext][background] received popup-to-background message:', cmd, params)
+
+  const commands: Record<string, (params?: any) => void> = {
+    'get-storage': async () => {
+      return await tomationStorageReady.then(async () => {
+        console.log('Storage ready in background (popup request):', tomationStorage.value)
+        return tomationStorage.value
+      })
+    },
+    'close-run-view': () => {
+      console.log('Task viewer closed (popup request)!')
+      tomationStorage.value.view = VIEWS.MAIN
+    },
+  }
+
+  if (commands[cmd]) {
+    commands[cmd](params)
+  }
+  else {
+    console.warn(`[tomation-webext][background] Unknown cmd received from popup: ${cmd}`, params)
+  }
 })
 /*
 addOnChunkedMessageListener(async (message: string, sender: any, sendResponse: any) => {

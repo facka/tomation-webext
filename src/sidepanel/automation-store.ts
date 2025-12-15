@@ -2,12 +2,13 @@ import { onMessage } from 'webext-bridge/popup'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 // import { sendChunkedMessage } from 'ext-send-chunked-message'
+import { VIEWS } from '~/logic/views'
 
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
   const initialAction: any = ref({})
   const actionsById: any = ref({})
-  const view = ref('MAIN')
+  const view = ref(VIEWS.MAIN)
   const viewParams = ref({})
 
   function extractActions(action: any) {
@@ -57,27 +58,41 @@ export const useAutomationStore = defineStore('automationStore', () => {
 */
   // refreshData()
 
-  function goTo(viewName: string, params?: any) {
+  function goTo(viewName: VIEWS, params?: any) {
     view.value = viewName
     viewParams.value = params
   }
 
   console.log('Setting up message listeners in automation store...')
-  onMessage('tomation-test-started', ({ data }: any) => {
-    initialAction.value = data.action
-    extractActions(initialAction.value)
-  })
 
-  onMessage('tomation-action-update', ({ data }: any) => {
-    const action = actionsById.value[data.action.id]
-    if (!action) {
-      actionsById.value[data.action.id] = data.action
+  onMessage('background-to-popup', ({ data }: any) => {
+    const { cmd, params } = data || {}
+    console.log('[tomation-webext][popup] received background-to-popup message:', cmd, params)
+
+    const commands: Record<string, (params?: any) => void> = {
+      'tomation-test-started': ({ action }: any) => {
+        initialAction.value = action
+        extractActions(initialAction.value)
+      },
+      'tomation-action-update': ({ action }: any) => {
+        const existingAction = actionsById.value[action.id]
+        if (!existingAction) {
+          actionsById.value[action.id] = action
+        }
+        else {
+          existingAction.status = action.status
+          existingAction.error = action.error
+          existingAction.value = action.context
+          existingAction.tries = action.tries
+        }
+      },
+    }
+
+    if (commands[cmd]) {
+      commands[cmd](params)
     }
     else {
-      action.status = data.action.status
-      action.error = data.action.error
-      action.value = data.action.context
-      action.tries = data.action.tries
+      console.warn(`[tomation-webext][popup] Unknown cmd received from background: ${cmd}`, params)
     }
   })
 

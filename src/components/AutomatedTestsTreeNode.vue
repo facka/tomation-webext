@@ -4,6 +4,7 @@ import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '../design-system/Expandable.vue'
 import { useActiveTab } from '~/composables/useActiveTab'
 import { tomationStorage } from '~/logic/storage'
+import { VIEWS } from '~/logic/views'
 
 const props = defineProps<{
   node: TreeNode
@@ -35,7 +36,7 @@ async function runTest(testId: string) {
   }, activeTab)
 }
 
-function goTo(view: string, viewParams: any = {}) {
+function goTo(view: VIEWS, viewParams: any = {}) {
   tomationStorage.value.view = view
   tomationStorage.value.viewParams = viewParams
 }
@@ -44,7 +45,7 @@ function openTest() {
   const action = tomationStorage.value.automatedTests[testId.value].action
   console.log('Open Test: ', toRaw(action))
   if (action) {
-    goTo('TEST', { action })
+    goTo(VIEWS.TEST, { action })
   }
 }
 </script>

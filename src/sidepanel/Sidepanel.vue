@@ -8,6 +8,7 @@ import { useAutomationStore } from './automation-store'
 import { tomationStorage } from '~/logic/storage'
 import { useActiveTab } from '~/composables/useActiveTab'
 import UrlStatus from '~/components/UrlStatus.vue'
+import { VIEWS } from '~/logic/views'
 
 const sidepanelStore = useAutomationStore()
 
@@ -16,10 +17,11 @@ function openOptionsPage() {
 }
 
 function closeTaskExecutionViewer() {
-  tomationStorage.value.view = 'MAIN'
+  tomationStorage.value.view = VIEWS.MAIN
+  sidepanelStore.view = VIEWS.MAIN
 }
 
-function goTo(view: string) {
+function goTo(view: VIEWS) {
   tomationStorage.value.view = view
 }
 
@@ -57,7 +59,7 @@ async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error'
             <div>Test inspector</div>
           </div>
           <div class="grow flex flex-row-reverse">
-            <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo('MAIN')">
+            <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo(VIEWS.MAIN)">
               <font-awesome-icon icon="fa-solid fa-times" />
             </button>
           </div>

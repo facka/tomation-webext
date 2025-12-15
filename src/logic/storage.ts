@@ -1,7 +1,8 @@
+import { VIEWS } from './views'
 import { useWebExtensionStorage } from '~/composables/useWebExtensionStorage'
 
 export const { data: tomationStorage, dataReady: tomationStorageReady } = useWebExtensionStorage('tomation-webext', {
-  view: 'MAIN', // VIEWER, TEST or MAIN
+  view: VIEWS.MAIN,
   initialAction: {},
   actionsById: {},
   automatedTests: {},
