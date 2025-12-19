@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
 import ActionViewer from './ActionViewer.vue'
 import { useActiveTab } from '~/composables/useActiveTab'
+import { useAutomationStore } from '~/sidepanel/automation-store'
 
 const props = defineProps<{
   action: any
@@ -12,6 +13,8 @@ const emit = defineEmits<{
 }>()
 
 const action = computed(() => props.action)
+
+const sidepanelStore = useAutomationStore()
 
 function closeRunView() {
   // eslint-disable-next-line vue/custom-event-name-casing
@@ -41,9 +44,11 @@ async function runAction(action: string) {
       </div>
     </div>
     <div class="p-1 mt-1 border border-1 flex flex-row-reverse space-x-1">
+      <pre>{{ sidepanelStore.status }}</pre>
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Play"
+        :disabled="sidepanelStore.status === 'running'"
         @click="runAction('continue-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-play" />
@@ -58,6 +63,7 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1"
         title="Pause"
+        :disabled="sidepanelStore.status === 'paused'"
         @click="runAction('pause-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-pause" />

@@ -10,6 +10,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const actionsById: any = ref({})
   const view = ref(VIEWS.MAIN)
   const viewParams = ref({})
+  const status = ref('idle') // idle, running, paused, stopped
 
   function extractActions(action: any) {
     if (action.steps) {
@@ -73,6 +74,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomation-test-started': ({ action }: any) => {
         initialAction.value = action
         extractActions(initialAction.value)
+        status.value = 'running'
       },
       'tomation-action-update': ({ action }: any) => {
         const existingAction = actionsById.value[action.id]
@@ -85,6 +87,12 @@ export const useAutomationStore = defineStore('automationStore', () => {
           existingAction.value = action.context
           existingAction.tries = action.tries
         }
+      },
+      'tomation-test-pause': () => {
+        status.value = 'paused'
+      },
+      'tomation-test-play': () => {
+        status.value = 'running'
       },
     }
 
@@ -101,6 +109,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
     initialAction,
     view,
     viewParams,
+    status,
     getActionById,
     setData,
     goTo,

@@ -128,6 +128,14 @@ onMessage('content-to-background', async ({ data }) => {
       console.log(`Test ended. Message = `, params)
       tomationStorage.value.currentRunningTest.finishedAt = new Date()
     },
+    'tomation-test-pause': (params: any) => {
+      console.log(`Test paused. Message = `, params)
+      sendMessage('background-to-popup', { cmd: 'tomation-test-pause', params }, 'popup')
+    },
+    'tomation-test-play': (params: any) => {
+      console.log(`Test continued. Message = `, params)
+      sendMessage('background-to-popup', { cmd: 'tomation-test-play', params }, 'popup')
+    },
   }
 
   if (commands[cmd]) {
