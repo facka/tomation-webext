@@ -5,6 +5,8 @@ import { tomationStorage, tomationStorageReady } from '~/logic/storage'
 import { useActiveTab } from '~/composables/useActiveTab'
 import { VIEWS } from '~/logic/views'
 
+const tabStatus = new Map() // tabId → "loading" | "complete"
+
 // only on dev mode
 if (import.meta.hot) {
   // @ts-expect-error for background HMR
@@ -28,15 +30,32 @@ browser.runtime.onInstalled.addListener((): void => {
   console.log('Extension installed')
 })
 
-onMessage('content-to-background', async ({ data }) => {
-  // console.info('[tomation-webext][background] got content-to-background', data, sender)
+browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status) {
+    tabStatus.set(tabId, changeInfo.status)
 
+    sendMessage('background-to-popup', {
+      cmd: 'tomationwebext-tab-status-updated',
+      params: { tabId, status: changeInfo.status },
+    }, 'popup')
+  }
+})
+
+onMessage('content-to-background', async ({ data, sender }) => {
+  // console.info('[tomation-webext][background] got content-to-background', data, sender)
   const { cmd, params } = (data as any) || {}
   const commands: Record<string, (params?: any) => void> = {
     'get-storage': async () => {
       return await tomationStorageReady.then(async () => {
         console.log('Storage ready in background (content script request):', tomationStorage.value)
         return tomationStorage.value
+      })
+    },
+    'tomation-session-init': async (params: any) => {
+      return await tomationStorageReady.then(async () => {
+        console.log('[tomation-webext][background] Session init received from content script:', params)
+        tomationStorage.value.sessionId = params.sessionId
+        console.log('SENDER TabId: ', sender.tabId)
       })
     },
     'tomation-test-started': async (params: any) => {

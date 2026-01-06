@@ -10,7 +10,12 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const actionsById: any = ref({})
   const view = ref(VIEWS.MAIN)
   const viewParams = ref({})
-  const status = ref('idle') // idle, running, paused, stopped
+  const testStatus = ref('idle') // idle, running, paused, stopped
+  const tabStatus: any = ref({}) // tabId -> status
+
+  function setTabStatus(tabId: number, status: string) {
+    tabStatus.value[tabId] = status
+  }
 
   function extractActions(action: any) {
     if (action.steps) {
@@ -74,7 +79,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomation-test-started': ({ action }: any) => {
         initialAction.value = action
         extractActions(initialAction.value)
-        status.value = 'running'
+        testStatus.value = 'running'
       },
       'tomation-action-update': ({ action }: any) => {
         const existingAction = actionsById.value[action.id]
@@ -89,10 +94,13 @@ export const useAutomationStore = defineStore('automationStore', () => {
         }
       },
       'tomation-test-pause': () => {
-        status.value = 'paused'
+        testStatus.value = 'paused'
       },
       'tomation-test-play': () => {
-        status.value = 'running'
+        testStatus.value = 'running'
+      },
+      'tomationwebext-tab-status-updated': ({ tabId, status }: any) => {
+        setTabStatus(tabId, status)
       },
     }
 
@@ -109,9 +117,11 @@ export const useAutomationStore = defineStore('automationStore', () => {
     initialAction,
     view,
     viewParams,
-    status,
+    testStatus,
+    tabStatus,
     getActionById,
     setData,
     goTo,
+    setTabStatus,
   }
 })

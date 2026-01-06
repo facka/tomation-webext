@@ -44,26 +44,27 @@ async function runAction(action: string) {
       </div>
     </div>
     <div class="p-1 mt-1 border border-1 flex flex-row-reverse space-x-1">
-      <pre>{{ sidepanelStore.status }}</pre>
+      <pre>{{ sidepanelStore.testStatus }}</pre>
       <button
-        class="flex-none rounded w-6 ring-1 px-1"
+        class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Play"
-        :disabled="sidepanelStore.status === 'running'"
+        :disabled="sidepanelStore.testStatus === 'running'"
         @click="runAction('continue-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-play" />
       </button>
       <button
-        class="flex-none rounded w-6 ring-1 px-1"
+        class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Next"
+        :disabled="sidepanelStore.testStatus === 'running'"
         @click="runAction('next-step-request')"
       >
         <font-awesome-icon icon="fa-solid fa-forward-step" />
       </button>
       <button
-        class="flex-none rounded w-6 ring-1 px-1"
+        class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Pause"
-        :disabled="sidepanelStore.status === 'paused'"
+        :disabled="sidepanelStore.testStatus === 'paused'"
         @click="runAction('pause-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-pause" />
