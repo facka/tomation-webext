@@ -11,12 +11,38 @@ const props = defineProps<{
 }>()
 
 const sidepanelStore = useAutomationStore()
+const expandableElem = ref()
 
 watch(props.action, (newAction) => {
   console.log('ActionViewer: action updated: ', newAction)
+  // scroll to the action div
+  const actionDiv = document.getElementById(`action-${newAction.id}`)
+  if (actionDiv) {
+    actionDiv.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }, { immediate: true })
 
 const action = computed(() => props.action || {})
+
+const allStepsSuccessful = computed(() => {
+  if (action.value.type === 'Action' && Array.isArray(action.value.steps)) {
+    return action.value.steps.every((step: any) => {
+      const stepStatus = sidepanelStore.getActionById(step.id)?.status
+      return stepStatus === ACTION_STATUS.SUCCESS
+    })
+  }
+  return false
+})
+
+// Collapse when all steps are successful
+watch(allStepsSuccessful, (successful) => {
+  if (successful) {
+    expandableElem.value.collapse()
+  }
+  else {
+    expandableElem.value.expand()
+  }
+})
 
 const status = computed(() => {
   return (sidepanelStore.getActionById(action.value.id)?.status) || ACTION_STATUS.WAITING
@@ -84,8 +110,9 @@ async function retryAction() {
 </script>
 
 <template>
+  <div :id="`action-${action.id}`" />
   <div v-if="action?.type === 'Action'" class="mt-1 text-left">
-    <Expandable expanded>
+    <Expandable ref="expandableElem" expanded>
       <template #header>
         <div class="flex">
           <span class="grow" :class="{ 'text-red-600': status === ACTION_STATUS.ERROR, 'text-gray-500': status === ACTION_STATUS.WAITING }">

@@ -7,6 +7,7 @@ import { VIEWS } from '~/logic/views'
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
   const initialAction: any = ref({})
+  const currentActionId: any = ref({})
   const actionsById: any = ref({})
   const view = ref(VIEWS.MAIN)
   const viewParams = ref({})
@@ -92,6 +93,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
           existingAction.value = action.context
           existingAction.tries = action.tries
         }
+        currentActionId.value = action.id
       },
       'tomation-test-pause': () => {
         testStatus.value = 'paused'
@@ -115,6 +117,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
   return {
     dataError,
     initialAction,
+    currentActionId,
     view,
     viewParams,
     testStatus,
