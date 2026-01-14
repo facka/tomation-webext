@@ -36,17 +36,9 @@ function injectFromURL(url: string | undefined) {
   const tomationStorage = await sendToBackground({ cmd: 'get-storage' })
   console.log(`[tomation-webext] Storage `, tomationStorage)
 
-  try {
-    const path = (tomationStorage as any)?.scriptURL
-    injectFromURL(path)
-  }
-  catch (err) {
-    console.error('[tomation-webext] Failed to read scriptURL from storage', err)
-  }
-
   window.addEventListener('message', (event: any) => {
-    console.log('[tomation-webext] window message event', event)
-    console.log('[tomation-webext] Sender: ', event.data.sender)
+    // console.log('[tomation-webext] window message event', event)
+    // console.log('[tomation-webext] Sender: ', event.data.sender)
     const { message, sender, payload } = event.data || {}
     if (sender === 'tomation' && message === 'injectedScript-to-contentScript') {
       const { cmd, params } = payload || {}
@@ -58,9 +50,17 @@ function injectFromURL(url: string | undefined) {
       })
     }
     else {
-      console.log('[tomation-webext] Ignored message that is not from injected script')
+      // console.log('[tomation-webext] Ignored message that is not from injected script')
     }
   })
+
+  try {
+    const path = (tomationStorage as any)?.scriptURL
+    injectFromURL(path)
+  }
+  catch (err) {
+    console.error('[tomation-webext] Failed to read scriptURL from storage', err)
+  }
 
   onMessage('sidepanel-to-contentScript', ({ data }: any) => {
     // if the message is handled by the injected script, forward it
