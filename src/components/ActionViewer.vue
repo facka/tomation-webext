@@ -121,14 +121,15 @@ async function retryAction() {
               v-if="action.params && Object.keys(action.params).length"
               :title="JSON.stringify(action.params)"
               class="cursor-pointer text-cyan-600"
-            > ({{ Object.keys(action.params).length }})</span>
+            > ({{ Object.keys(action.params).length === 1 ? Object.values(action.params)[0] : Object.keys(action.params).length }})
+            </span>
+            <div class="flex-none w-6 pl-2 font-bold">
+              <font-awesome-icon v-if="status === ACTION_STATUS.PAUSED" class="text-orange-500" icon="fa-solid fa-pause" />
+              <font-awesome-icon v-if="status === ACTION_STATUS.RUNNING" class="text-blue-500" icon="fa-solid fa-person-running" />
+              <font-awesome-icon v-if="status === ACTION_STATUS.SUCCESS" class="text-green-500" icon="fa-solid fa-check" />
+              <font-awesome-icon v-if="status === ACTION_STATUS.ERROR" class="text-red-600" icon="fa-solid fa-times" />
+            </div>
           </span>
-          <div class="flex-none w-6 pl-2 font-bold">
-            <font-awesome-icon v-if="status === ACTION_STATUS.PAUSED" class="text-orange-500" icon="fa-solid fa-pause" />
-            <font-awesome-icon v-if="status === ACTION_STATUS.RUNNING" class="text-blue-500" icon="fa-solid fa-person-running" />
-            <font-awesome-icon v-if="status === ACTION_STATUS.SUCCESS" class="text-green-500" icon="fa-solid fa-check" />
-            <font-awesome-icon v-if="status === ACTION_STATUS.ERROR" class="text-red-600" icon="fa-solid fa-times" />
-          </div>
         </div>
       </template>
       <div
