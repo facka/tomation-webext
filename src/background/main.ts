@@ -126,10 +126,8 @@ onMessage('content-to-background', async ({ data, sender }) => {
     },
     'tomation-register-test': async (params: any) => {
       return await tomationStorageReady.then(async () => {
-        console.log(`Registering test. Message = `, params)
         tomationStorage.value.automatedTests[params.id] = {
           lastResult: 'UNDEFINED',
-          action: params.action,
         }
       })
     },
