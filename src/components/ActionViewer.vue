@@ -141,6 +141,37 @@ async function retryAction() {
       </div>
     </Expandable>
   </div>
+  <!--
+  <div v-else-if="action.type === 'If'">
+    <Expandable :expanded="true">
+      <template #header>
+        <div class="flex">
+          <span class="grow" :class="{ 'text-red-600': status === ACTION_STATUS.ERROR, 'text-gray-500': status === ACTION_STATUS.WAITING }">
+            <span>IF {{ action.conditionDescription }}</span>
+          </span>
+          <div class="flex-none w-6 pl-2 font-bold">
+            <font-awesome-icon v-if="status === ACTION_STATUS.PAUSED" class="text-orange-500" icon="fa-solid fa-pause" />
+            <font-awesome-icon v-if="status === ACTION_STATUS.RUNNING" class="text-blue-500" icon="fa-solid fa-person-running" />
+            <font-awesome-icon v-if="status === ACTION_STATUS.SUCCESS" class="text-green-500" icon="fa-solid fa-check" />
+            <font-awesome-icon v-if="status === ACTION_STATUS.ERROR" class="text-red-600" icon="fa-solid fa-times" />
+          </div>
+        </div>
+      </template>
+      <div class="mt-1 mb-1">
+        <div class="font-bold">
+          Then:
+        </div>
+        <ActionViewer :action="action.ifAction" />
+        <div v-if="action.elseAction" class="mt-2">
+          <div class="font-bold">
+            Else:
+          </div>
+          <ActionViewer :action="action.elseAction" />
+        </div>
+      </div>
+    </Expandable>
+  </div>
+  -->
   <div v-else>
     <div class="flex border-b-2 border-gray-200">
       <div class="grow py-1">
