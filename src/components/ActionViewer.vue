@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { sendMessage } from 'webext-bridge/popup'
 import { ACTION_STATUS } from 'tomation'
-import Expandable from '../design-system/Expandable.vue'
-import { useActiveTab } from '~/composables/useActiveTab'
-import { useAutomationStore } from '~/sidepanel/automation-store'
+import { sendMessage } from 'webext-bridge/popup'
+import Expandable from '@/components/design-system/Expandable.vue'
 
 const props = defineProps<{
   action: any

@@ -1,9 +1,9 @@
-import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import FontAwesomeIcon from '../plugins/fontawesome'
+import { createApp } from 'vue'
+import { setupApp } from '@/logic/common-setup'
+import FontAwesomeIcon from '@/plugins/fontawesome'
 import App from './Sidepanel.vue'
-import { setupApp } from '~/logic/common-setup'
-import '../styles'
+import '@/styles'
 
 const app = createApp(App)
   .component('FontAwesomeIcon', FontAwesomeIcon)

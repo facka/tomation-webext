@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
-import AutomatedTests from '../components/AutomatedTests.vue'
-import TaskExecutionViewer from '../components/TaskExecutionViewer.vue'
-import ActionViewer from '../components/ActionViewer.vue'
-import History from '../components/History.vue'
-import { useAutomationStore } from './automation-store'
-import { tomationStorage } from '~/logic/storage'
-import { useActiveTab } from '~/composables/useActiveTab'
-import UrlStatus from '~/components/UrlStatus.vue'
+import ActionViewer from '@/components/ActionViewer.vue'
+import AutomatedTests from '@/components/AutomatedTests.vue'
+import History from '@/components/History.vue'
+import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
+import UrlStatus from '@/components/UrlStatus.vue'
+import { useAutomationStore } from '@/composables/automation-store'
+import { useActiveTab } from '@/composables/useActiveTab'
 import { VIEWS } from '~/logic/views'
 
 const sidepanelStore = useAutomationStore()
@@ -42,12 +42,11 @@ function openOptionsPage() {
 }
 
 function closeTaskExecutionViewer() {
-  tomationStorage.value.view = VIEWS.MAIN
-  sidepanelStore.view = VIEWS.MAIN
+  sidepanelStore.goTo(VIEWS.MAIN)
 }
 
 function goTo(view: VIEWS) {
-  tomationStorage.value.view = view
+  sidepanelStore.goTo(view)
 }
 
 async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error') {
@@ -64,8 +63,8 @@ async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error'
   <nav class="w-full">
     <div class="flex items-center justify-between p-2">
       <div>
-        <span class="opacity-50">Script URL:</span> {{ tomationStorage.scriptURL }}
-        <UrlStatus :url="tomationStorage.scriptURL" class="ml-2" @status="handleStatusChange" />
+        <span class="opacity-50">Script URL:</span> {{ sidepanelStore.scriptURL }}
+        <UrlStatus :url="sidepanelStore.scriptURL" class="ml-2" @status="handleStatusChange" />
       </div>
       <button class="btn" title="Options" @click="openOptionsPage">
         <font-awesome-icon icon="fa-solid fa-gear" />
@@ -73,19 +72,20 @@ async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error'
     </div>
   </nav>
   <main class="w-full px-2 py-2 text-gray-700">
+    <pre>VIEW: {{ sidepanelStore.view }}</pre>
     <div v-show="isLoading" class="my-2">
       <font-awesome-icon icon="fa-solid fa-spinner" spin /> Loading...
     </div>
     <div v-show="!isLoading" class="mb-2">
-      <div v-if="tomationStorage.scriptURL">
-        <div v-if="tomationStorage.view === 'VIEWER'">
+      <div v-if="sidepanelStore.scriptURL">
+        <div v-if="sidepanelStore.view === 'VIEWER'">
           <TaskExecutionViewer :action="sidepanelStore.initialAction" @@close="closeTaskExecutionViewer" />
         </div>
-        <div v-else-if="tomationStorage.view === 'MAIN'">
-          <AutomatedTests :tests="tomationStorage.automatedTests" class="mt-2" />
+        <div v-else-if="sidepanelStore.view === 'MAIN'">
+          <AutomatedTests :tests="sidepanelStore.automatedTests" class="mt-2" />
           <History class="mt-2" />
         </div>
-        <div v-else-if="tomationStorage.view === 'TEST'">
+        <div v-else-if="sidepanelStore.view === 'TEST'">
           <div class="flex">
             <div class="w-11/12 font-bold">
               <div>Test inspector</div>
@@ -97,7 +97,7 @@ async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error'
             </div>
           </div>
           <div>
-            <ActionViewer :action="tomationStorage.viewParams?.action" />
+            <ActionViewer :action="(sidepanelStore.viewParams as any)?.action" />
           </div>
         </div>
       </div>

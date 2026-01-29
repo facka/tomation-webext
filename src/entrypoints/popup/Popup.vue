@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { tomationStorage } from '~/logic/storage'
+const { state: scriptURL, isLoading } = useStoredValue<string>('local:scriptURL', '')
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
@@ -14,7 +14,8 @@ function openOptionsPage() {
       Open Options
     </button>
     <div class="mt-2">
-      <span class="opacity-50">Storage:</span> {{ tomationStorage }}
+      <span v-if="!isLoading" class="opacity-50">Script URL: {{ scriptURL || 'Not set' }}</span>
+      <span v-else class="opacity-50">Loading...</span>
     </div>
   </main>
 </template>

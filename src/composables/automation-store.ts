@@ -1,18 +1,43 @@
-import { onMessage } from 'webext-bridge/popup'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { onMessage } from 'webext-bridge/popup'
 // import { sendChunkedMessage } from 'ext-send-chunked-message'
 import { VIEWS } from '~/logic/views'
+
+function loadStoredValue<T>(prop: string, defaultValue: T) {
+  // It should create the vue ref load from useStoredValue and add watch logic to update the value
+  const { state: storedValue } = useStoredValue<T>(`local:${prop}`, defaultValue)
+
+  console.log(`Loaded stored value for ${prop}:`, storedValue.value)
+
+  const reference = ref<T>(storedValue.value ?? defaultValue)
+
+  // Watch for changes in storedValue and update value accordingly
+  watch(storedValue, (newVal) => {
+    console.log(`Stored value for ${prop} changed:`, newVal)
+    if (prop === 'view') {
+      console.error(`Updating view to:`, newVal)
+    }
+    if (newVal) { // Looks like sometimes newVal is null when localStorage is empty, so we skip this null value
+      reference.value = newVal
+    }
+  })
+
+  return reference
+}
 
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
   const initialAction: any = ref({})
   const currentActionId: any = ref({})
-  const actionsById: any = ref({})
-  const view = ref(VIEWS.MAIN)
+  const actionsById = loadStoredValue<any>('actionsById', {})
+  const view = loadStoredValue<VIEWS>('view', VIEWS.MAIN)
   const viewParams = ref({})
   const testStatus = ref('idle') // idle, running, paused, stopped
   const tabStatus: any = ref({}) // tabId -> status
+  const automatedTests = loadStoredValue<Record<string, any>>('automatedTests', {})
+  const scriptURL = loadStoredValue<string>('scriptURL', '') // URL of the automation script being executed
+  const history = ref<Array<object>>([])
 
   function setTabStatus(tabId: number, status: string) {
     tabStatus.value[tabId] = status
@@ -34,6 +59,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
   function setData(data: any) {
     console.log('Store.setData(): Automated Tests: ', data.automatedTests)
+    automatedTests.value = data.automatedTests
     actionsById.value = data.actionsById
   }
 
@@ -104,6 +130,9 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomationwebext-tab-status-updated': ({ tabId, status }: any) => {
         setTabStatus(tabId, status)
       },
+      'set-script-url': ({ url }: any) => {
+        scriptURL.value = url
+      },
     }
 
     if (commands[cmd]) {
@@ -116,12 +145,15 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
   return {
     dataError,
+    automatedTests,
     initialAction,
     currentActionId,
     view,
     viewParams,
     testStatus,
     tabStatus,
+    scriptURL,
+    history,
     getActionById,
     setData,
     goTo,

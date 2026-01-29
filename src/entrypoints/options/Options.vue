@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
-import logo from '~/assets/icon.png'
-import { tomationStorage, tomationStorageReady } from '~/logic/storage'
+import logo from '@/assets/icon.png'
+
+const { state: scriptURL } = useStoredValue<string>('local:scriptURL', '')
 
 const url = ref('')
 
+watch(
+  () => scriptURL.value,
+  (newVal) => {
+    url.value = newVal || ''
+  },
+)
+
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
-  tomationStorageReady.then(() => {
-    console.info('[tomation-webext] Storage ready in Options')
-    console.log('[tomation-webext] tomationStorage:', tomationStorage.value)
-    url.value = tomationStorage.value.scriptURL || ''
-  })
 })
 
 async function sendToBackground(payload: any) {
@@ -26,7 +30,7 @@ async function sendToBackground(payload: any) {
 }
 
 async function onSave() {
-  await sendToBackground({ cmd: 'save-script-URL', params: { url: url.value.trim() } })
+  await sendToBackground({ cmd: 'save-script-url', params: { url: url.value.trim() } })
 }
 </script>
 

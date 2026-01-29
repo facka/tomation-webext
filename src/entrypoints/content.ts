@@ -30,11 +30,11 @@ function injectFromURL(url: string | undefined) {
 }
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-(async () => {
+async function init() {
   console.info('[tomation-webext] Running content script...')
 
-  const tomationStorage = await sendToBackground({ cmd: 'get-storage' })
-  console.log(`[tomation-webext] Storage `, tomationStorage)
+  const scriptURL = await sendToBackground({ cmd: 'get-script-url' }) as string
+  console.log(`[tomation-webext] Storage `, scriptURL)
 
   window.addEventListener('message', (event: any) => {
     // console.log('[tomation-webext] window message event', event)
@@ -55,8 +55,7 @@ function injectFromURL(url: string | undefined) {
   })
 
   try {
-    const path = (tomationStorage as any)?.scriptURL
-    injectFromURL(path)
+    injectFromURL(scriptURL)
   }
   catch (err) {
     console.error('[tomation-webext] Failed to read scriptURL from storage', err)
@@ -95,4 +94,12 @@ function injectFromURL(url: string | undefined) {
       window.location.reload()
     }
   })
-})()
+}
+
+export default defineContentScript({
+  matches: ['*://*/*'],
+  main(ctx) {
+    console.log({ ctx })
+    init()
+  },
+})

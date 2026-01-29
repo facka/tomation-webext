@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
-import ExpandableSection from '../design-system/ExpandableSection.vue'
-import AutomatedTestsTreeNode from './AutomatedTestsTreeNode.vue'
-import { useActiveTab } from '~/composables/useActiveTab'
+import AutomatedTestsTreeNode from '@/components/AutomatedTestsTreeNode.vue'
+import ExpandableSection from '@/components/design-system/ExpandableSection.vue'
 
 const props = defineProps<{
   tests: any
@@ -70,7 +68,7 @@ async function reloadTests() {
 </script>
 
 <template>
-  <ExpandableSection title="Automated Tests" :loading="false" expanded>
+  <ExpandableSection :title="`Automated Tests (${testsList.length})`" :loading="false" expanded>
     <template #summary>
       <a class="cursor-pointer text-cyan-600" title="Reload tests" @click="reloadTests()">
         <font-awesome-icon icon="fa-solid fa-refresh" />
