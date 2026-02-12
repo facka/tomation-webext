@@ -9,6 +9,8 @@ export default defineBackground(() => {
 
   const tabStatus = new Map() // tabId → "loading" | "complete"
 
+  const testsMap = {} as Record<string, { lastResult: string }>
+
   // remove or turn this off if you don't use side panel
   const USE_SIDE_PANEL = true
 
@@ -43,7 +45,16 @@ export default defineBackground(() => {
       },
       'tomation-session-init': async (params: any) => {
         console.log('[tomation-webext][background] Session init received from content script:', params)
-        return await TomationStorage.sessionId.setValue(params.sessionId)
+        await TomationStorage.sessionId.setValue(params.sessionId)
+
+        const automatedTests = await TomationStorage.automatedTests.getValue() as Record<string, any>
+
+        // clear automatedTests Record and add new values from testsMap
+        Object.keys(automatedTests).forEach(key => delete automatedTests[key])
+        Object.keys(testsMap).forEach((key: string) => {
+          automatedTests[key] = testsMap[key]
+        })
+        await TomationStorage.automatedTests.setValue(automatedTests)
       },
       'tomation-test-started': async (params: any) => {
         browser.action.setBadgeText({ text: 'ON' })
@@ -118,11 +129,9 @@ export default defineBackground(() => {
         sendMessage('read-memory-response', memory[params.memorySlotName], activeTab)
       },
       'tomation-register-test': async (params: any) => {
-        const automatedTests = await TomationStorage.automatedTests.getValue() as Record<string, any>
-        automatedTests[params.id] = {
+        testsMap[params.id] = {
           lastResult: 'UNDEFINED',
         }
-        await TomationStorage.automatedTests.setValue(automatedTests)
       },
       'tomation-test-passed': async (params: any) => {
         console.log(`Marking test as PASSED. Message = `, params)

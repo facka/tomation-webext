@@ -15,12 +15,11 @@ function loadStoredValue<T>(prop: string, defaultValue: T) {
   // Watch for changes in storedValue and update value accordingly
   watch(storedValue, (newVal) => {
     console.log(`Stored value for ${prop} changed:`, newVal)
-    if (prop === 'view') {
-      console.error(`Updating view to:`, newVal)
-    }
     if (newVal) { // Looks like sometimes newVal is null when localStorage is empty, so we skip this null value
       reference.value = newVal
     }
+  }, {
+    deep: true,
   })
 
   return reference
