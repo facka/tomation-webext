@@ -1,3 +1,4 @@
+import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
 
 async function sendToBackground(payload: any = { hello: 'background' }) {
@@ -33,8 +34,8 @@ function injectFromURL(url: string | undefined) {
 async function init() {
   console.info('[tomation-webext] Running content script...')
 
-  const scriptURL = await sendToBackground({ cmd: 'get-script-url' }) as string
-  console.log(`[tomation-webext] Storage `, scriptURL)
+  const workspace = await sendToBackground({ cmd: 'get-workspace' }) as Workspace
+  console.log(`[tomation-webext] Script: `, workspace.script)
 
   window.addEventListener('message', (event: any) => {
     // console.log('[tomation-webext] window message event', event)
@@ -55,7 +56,8 @@ async function init() {
   })
 
   try {
-    injectFromURL(scriptURL)
+    console.info(`[tomation-webext] Injecting script for host ${workspace.host} from URL: ${workspace.script}`)
+    injectFromURL(workspace.script)
   }
   catch (err) {
     console.error('[tomation-webext] Failed to read scriptURL from storage', err)

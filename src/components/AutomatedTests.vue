@@ -16,7 +16,7 @@ const testsTree = computed(() => {
   return buildTree(sortedPaths.value)
 })
 
-interface TreeNode {
+type TreeNode = {
   name: string
   path: string
   children: TreeNode[]

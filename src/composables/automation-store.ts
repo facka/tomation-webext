@@ -33,13 +33,13 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const view = loadStoredValue<VIEWS>('view', VIEWS.MAIN)
   const viewParams = ref({})
   const testStatus = ref('idle') // idle, running, paused, stopped
-  const tabStatus: any = ref({}) // tabId -> status
+  const tabsInfoById: Ref<Record<number, any>> = ref({}) // tabId -> { status, url, ... }
   const automatedTests = loadStoredValue<Record<string, any>>('automatedTests', {})
   const scriptURL = loadStoredValue<string>('scriptURL', '') // URL of the automation script being executed
   const history = ref<Array<object>>([])
 
-  function setTabStatus(tabId: number, status: string) {
-    tabStatus.value[tabId] = status
+  function setTabInfo(tabId: number, info: { status: string, url: string }) {
+    tabsInfoById.value[tabId] = info
   }
 
   function extractActions(action: any) {
@@ -126,8 +126,8 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomation-test-play': () => {
         testStatus.value = 'running'
       },
-      'tomationwebext-tab-status-updated': ({ tabId, status }: any) => {
-        setTabStatus(tabId, status)
+      'tomationwebext-tab-updated': ({ tabId, status, tabUrl }: any) => {
+        setTabInfo(tabId, { status, url: tabUrl })
       },
       'set-script-url': ({ url }: any) => {
         scriptURL.value = url
@@ -150,12 +150,12 @@ export const useAutomationStore = defineStore('automationStore', () => {
     view,
     viewParams,
     testStatus,
-    tabStatus,
+    tabsInfoById,
     scriptURL,
     history,
     getActionById,
     setData,
     goTo,
-    setTabStatus,
+    setTabInfo,
   }
 })

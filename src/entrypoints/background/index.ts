@@ -1,4 +1,5 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
+import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
 import { useActiveTab } from '~/composables/useActiveTab'
 // import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
 import TomationStorage from '~/logic/storage'
@@ -25,23 +26,49 @@ export default defineBackground(() => {
     console.log('Extension installed')
   })
 
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status) {
       tabStatus.set(tabId, changeInfo.status)
 
       sendMessage('background-to-popup', {
-        cmd: 'tomationwebext-tab-status-updated',
-        params: { tabId, status: changeInfo.status },
+        cmd: 'tomationwebext-tab-updated',
+        params: { tabId, status: changeInfo.status, tabUrl: tab.url },
       }, 'popup')
+
+      // Only act if the tab is the active one in its window and the update is complete
+      if (tab.active && changeInfo.status === 'complete') {
+        updateSidePanel(tabId)
+      }
     }
   })
+
+  // Listen for when the active tab changes
+  browser.tabs.onActivated.addListener((activeInfo) => {
+    updateSidePanel(activeInfo.tabId)
+  })
+
+  // Function to send a message to the side panel
+  function updateSidePanel(tabId: number) {
+    // Query the active tab's details
+    browser.tabs.get(tabId, (tab) => {
+      if (tab && tab.url) {
+        sendMessage('background-to-popup', {
+          cmd: 'tomationwebext-tab-updated',
+          params: { tabId, status: 'unknown', tabUrl: tab.url },
+        }, 'popup')
+      }
+    })
+  }
 
   onMessage('content-to-background', async ({ data }) => {
     // console.info('[tomation-webext][background] got content-to-background', data, sender)
     const { cmd, params } = (data as any) || {}
     const commands: Record<string, (params?: any) => void> = {
-      'get-script-url': async () => {
-        return await TomationStorage.scriptURL.getValue()
+      'get-workspace': async () => {
+        const activeTab = await useActiveTab().getActiveTab()
+        const host = new URL(activeTab.tab?.url ?? '').host
+        const workspace = await workspaceHandlers[WorkspaceCmd.GetForHost]({ host: host ?? '' })
+        return workspace
       },
       'tomation-session-init': async (params: any) => {
         console.log('[tomation-webext][background] Session init received from content script:', params)
@@ -199,8 +226,24 @@ export default defineBackground(() => {
     return { ok: true }
   })
 
-  // --------------------------------
+  workspaceHandlers[WorkspaceCmd.Create]({
+    name: 'Escribehost Stage',
+    host: 'ehr.stage.int.aws.lillegroup.com',
+    script: 'http://127.0.0.1:8080/tests.bundle.js',
+  })
 
+  onMessage('sidepanel-to-background', async ({ data }) => {
+    const { cmd, params } = (data as any) || {}
+    const handlers = {
+      ...workspaceHandlers,
+    }
+    const handler = (handlers as any)[cmd]
+    if (!handler)
+      throw new Error(`Unknown command: ${cmd}`)
+    return handler(params)
+  })
+
+  // --------------------------------
   console.log('Running background...')
 
   async function extractActions(action: any) {
