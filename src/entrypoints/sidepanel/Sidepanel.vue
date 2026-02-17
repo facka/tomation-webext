@@ -125,21 +125,29 @@ async function deleteWorkspace(id: string) {
 <template>
   <nav class="w-full">
     <div v-if="!workspace">
-      <div class="p-2 bg-gray-100 font-bold">
-        No workspace found locally for this page {{ currentTabTitle }} ({{ currentTabHost }})
-      </div>
-      <div class="p-2 bg-yellow-100 text-yellow-800">
-        <div class="font-bold">
-          Start a tomation project to run tests directly from the page
-        </div>
+      <div class="p-2 bg-gray-200 font-bold">
+        No workspace found locally for this page {{ currentTabHost }}
       </div>
       <form class="p-2" @submit.prevent="startProject">
+        <div class="mb-3 text-gray-800">
+          Start a tomation project to run tests directly from the page
+        </div>
         <div class="mb-3">
-          <label class="block text-sm font-medium mb-1">Workspace name</label>
+          <label class="block text-sm font-medium mb-1">
+            Workspace name
+            <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="A descriptive name for your workspace project">
+              <font-awesome-icon icon="fa-solid fa-circle-info" />
+            </button>
+          </label>
           <input v-model="workspaceName" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
         </div>
         <div class="mb-3">
-          <label class="block text-sm font-medium mb-1">Script URL</label>
+          <label class="block text-sm font-medium mb-1">
+            Script URL
+            <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="URL pointing to your test automation script file">
+              <font-awesome-icon icon="fa-solid fa-circle-info" />
+            </button>
+          </label>
           <input v-model="workspaceScriptURL" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
           <UrlStatus :url="workspaceScriptURL" class="ml-2" @status="handleStatusChange" />
         </div>
