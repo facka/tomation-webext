@@ -60,7 +60,7 @@ async function init() {
     injectFromURL(workspace.script)
   }
   catch (err) {
-    console.error('[tomation-webext] Failed to read scriptURL from storage', err)
+    console.error('[tomation-webext] Failed to read scriptURL from workspace', err)
   }
 
   onMessage('sidepanel-to-contentScript', ({ data }: any) => {

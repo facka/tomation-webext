@@ -14,13 +14,6 @@ const sessionId = storage.defineItem<string>(
   },
 )
 
-const scriptURL = storage.defineItem<string>(
-  'local:scriptURL',
-  {
-    fallback: '',
-  },
-)
-
 const initialAction = storage.defineItem<object>(
   'local:initialAction',
   {
@@ -66,7 +59,6 @@ const memory = storage.defineItem<Array<object>>(
 export default {
   view,
   sessionId,
-  scriptURL,
   initialAction,
   actionsById,
   automatedTests,

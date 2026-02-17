@@ -113,12 +113,8 @@ async function startProject() {
   await reloadTests()
 }
 
-async function deleteWorkspace(id: string) {
-  await sendMessage('sidepanel-to-background', {
-    cmd: WorkspaceCmd.Delete,
-    params: { id },
-  }, 'background')
-  existingWorkspaces.value = existingWorkspaces.value.filter(ws => ws.id !== id)
+function openOptionsPage() {
+  browser.runtime.openOptionsPage()
 }
 </script>
 
@@ -202,17 +198,11 @@ async function deleteWorkspace(id: string) {
       </div>
     </div>
     <div>
-      <div v-if="existingWorkspaces.length > 0" class="p-2 bg-blue-100 text-blue-800">
+      <div class="p-2 bg-blue-100 text-blue-800">
         <div class="font-bold">
-          Existing workspaces for other hosts:
-        </div>
-        <div class="flex flex-col">
-          <div v-for="ws in existingWorkspaces" :key="ws.id" class="flex justify-between items-center p-2">
-            <span>{{ ws.name }} ({{ ws.host }})</span>
-            <button class="text-red-500" title="Delete" @click="deleteWorkspace(ws.id)">
-              <font-awesome-icon icon="fa-solid fa-trash" />
-            </button>
-          </div>
+          <a href="#" class="text-blue-600 hover:underline" @click.prevent="openOptionsPage()">
+            See all workspaces
+          </a>
         </div>
       </div>
     </div>

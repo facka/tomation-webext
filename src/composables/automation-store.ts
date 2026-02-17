@@ -35,7 +35,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const testStatus = ref('idle') // idle, running, paused, stopped
   const tabsInfoById: Ref<Record<number, any>> = ref({}) // tabId -> { status, url, ... }
   const automatedTests = loadStoredValue<Record<string, any>>('automatedTests', {})
-  const scriptURL = loadStoredValue<string>('scriptURL', '') // URL of the automation script being executed
   const history = ref<Array<object>>([])
 
   function setTabInfo(tabId: number, info: { status: string, url: string }) {
@@ -129,9 +128,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomationwebext-tab-updated': ({ tabId, status, tabUrl }: any) => {
         setTabInfo(tabId, { status, url: tabUrl })
       },
-      'set-script-url': ({ url }: any) => {
-        scriptURL.value = url
-      },
     }
 
     if (commands[cmd]) {
@@ -151,7 +147,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
     viewParams,
     testStatus,
     tabsInfoById,
-    scriptURL,
     history,
     getActionById,
     setData,

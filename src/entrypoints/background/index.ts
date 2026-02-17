@@ -207,29 +207,21 @@ export default defineBackground(() => {
     return { ok: true }
   })
 
-  onMessage('options-to-background', async ({ data, sender }) => {
-    console.info('[tomation-webext][background] got options-to-background', data, sender)
-    const { cmd, params } = (data as any) || {}
-    const commands: Record<string, (params?: any) => void> = {
-      'save-script-url': async (params: any) => {
-        await TomationStorage.scriptURL.setValue(params.url)
-        console.log('[tomation-webext][background] Saved script URL to storage:', TomationStorage.scriptURL.getValue())
-      },
-    }
-    if (commands[cmd]) {
-      commands[cmd](params)
-    }
-    else {
-      console.warn(`[tomation-webext][background] Unknown cmd received from options: ${cmd}`, params)
-    }
-    // return something serializable
-    return { ok: true }
-  })
-
   workspaceHandlers[WorkspaceCmd.Create]({
     name: 'Escribehost Stage',
     host: 'ehr.stage.int.aws.lillegroup.com',
     script: 'http://127.0.0.1:8080/tests.bundle.js',
+  })
+
+  onMessage('options-to-background', async ({ data }) => {
+    const { cmd, params } = (data as any) || {}
+    const handlers = {
+      ...workspaceHandlers,
+    }
+    const handler = (handlers as any)[cmd]
+    if (!handler)
+      throw new Error(`Unknown command: ${cmd}`)
+    return handler(params)
   })
 
   onMessage('sidepanel-to-background', async ({ data }) => {
@@ -260,10 +252,6 @@ export default defineBackground(() => {
     console.log('[tomation-webext][background] received popup-to-background message:', cmd, params)
 
     const commands: Record<string, (params?: any) => void> = {
-      'get-script-url': async () => {
-        console.log('Storage ready in background (popup request):', TomationStorage)
-        return await TomationStorage.scriptURL.getValue()
-      },
       'close-run-view': async () => {
         console.log('Task viewer closed (popup request)!')
         await TomationStorage.view.setValue(VIEWS.MAIN)

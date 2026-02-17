@@ -1,36 +1,25 @@
 <script setup lang="ts">
+import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMounted, ref, watch } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
+import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
 
-const { state: scriptURL } = useStoredValue<string>('local:scriptURL', '')
-
-const url = ref('')
-
-watch(
-  () => scriptURL.value,
-  (newVal) => {
-    url.value = newVal || ''
-  },
-)
+const allWorkspaces = ref<Workspace[]>([])
 
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
+  allWorkspaces.value = await sendMessage('options-to-background', {
+    cmd: WorkspaceCmd.GetAll,
+  }, 'background')
 })
 
-async function sendToBackground(payload: any) {
-  try {
-    const resp = await sendMessage('options-to-background', payload)
-    console.info('[tomation-webext] Sent message to background', resp)
-    return resp
-  }
-  catch (err) {
-    console.error('[tomation-webext] Failed to send message to background', err)
-  }
-}
-
-async function onSave() {
-  await sendToBackground({ cmd: 'save-script-url', params: { url: url.value.trim() } })
+async function deleteWorkspace(id: string) {
+  await sendMessage('options-to-background', {
+    cmd: WorkspaceCmd.Delete,
+    params: { id },
+  }, 'background')
+  allWorkspaces.value = allWorkspaces.value.filter(ws => ws.id !== id)
 }
 </script>
 
@@ -41,17 +30,18 @@ async function onSave() {
       Tomation Web Extension Options
     </h1>
 
-    <div class="mt-6 border rounded p-4 text-left">
-      <h3 class="font-semibold mb-2">
-        Link script
-      </h3>
-
-      <form class="flex gap-2 flex-col sm:flex-row items-stretch" @submit.prevent="url && onSave()">
-        <input v-model="url" placeholder="URL to JS file" class="flex-1 border rounded px-2 py-1">
-        <button type="submit" class="border rounded px-3 py-1 bg-blue-600 text-white">
-          Save
-        </button>
-      </form>
+    <div v-if="allWorkspaces.length > 0" class="p-2">
+      <div class="p-2 font-bold  bg-blue-100 text-blue-800">
+        Workspaces created in this extension:
+      </div>
+      <div class="flex flex-col">
+        <div v-for="ws in allWorkspaces" :key="ws.id" class="flex justify-between items-center p-2">
+          <span>{{ ws.name }} ({{ ws.host }})</span>
+          <button class="text-red-500" title="Delete" @click="deleteWorkspace(ws.id)">
+            <font-awesome-icon icon="fa-solid fa-trash" />
+          </button>
+        </div>
+      </div>
     </div>
   </main>
 </template>

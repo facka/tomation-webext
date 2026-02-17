@@ -19,7 +19,7 @@ const testId = computed(() => {
   }
 })
 
-interface TreeNode {
+type TreeNode = {
   name: string
   path: string
   children: TreeNode[]
