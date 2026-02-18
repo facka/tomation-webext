@@ -10,7 +10,7 @@ export default defineBackground(() => {
 
   const tabStatus = new Map() // tabId → "loading" | "complete"
 
-  const testsMap = {} as Record<string, { lastResult: string }>
+  const testsMap = {} as Record<string, any>
 
   // remove or turn this off if you don't use side panel
   const USE_SIDE_PANEL = true
@@ -158,6 +158,7 @@ export default defineBackground(() => {
       'tomation-register-test': async (params: any) => {
         testsMap[params.id] = {
           lastResult: 'UNDEFINED',
+          action: params.action,
         }
       },
       'tomation-test-passed': async (params: any) => {
@@ -228,6 +229,10 @@ export default defineBackground(() => {
     const { cmd, params } = (data as any) || {}
     const handlers = {
       ...workspaceHandlers,
+      'get-test-by-id': async (params: any) => {
+        const automatedTests = await TomationStorage.automatedTests.getValue() as Record<string, any>
+        return automatedTests[params.testId]
+      },
     }
     const handler = (handlers as any)[cmd]
     if (!handler)

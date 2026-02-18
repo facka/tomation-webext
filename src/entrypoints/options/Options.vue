@@ -36,7 +36,7 @@ async function deleteWorkspace(id: string) {
       </div>
       <div class="flex flex-col">
         <div v-for="ws in allWorkspaces" :key="ws.id" class="flex justify-between items-center p-2">
-          <span>{{ ws.name }} ({{ ws.host }})</span>
+          <div><span class="text-gray-700 font-bold">{{ ws.name }} ({{ ws.host }})</span> <span>Linked to: {{ ws.script }}</span></div>
           <button class="text-red-500" title="Delete" @click="deleteWorkspace(ws.id)">
             <font-awesome-icon icon="fa-solid fa-trash" />
           </button>

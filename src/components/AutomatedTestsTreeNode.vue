@@ -40,11 +40,18 @@ function goTo(view: VIEWS, viewParams: any = {}) {
   sidepanelStore.goTo(view, viewParams)
 }
 
-function openTest() {
-  const action = sidepanelStore.automatedTests[testId.value]?.action
-  console.log('Open Test: ', toRaw(action))
-  if (action) {
-    goTo(VIEWS.TEST, { action })
+async function openTest() {
+  console.log('Opening test with id:', testId.value)
+  const test: any = await sendMessage('sidepanel-to-background', {
+    cmd: 'get-test-by-id',
+    params: {
+      testId: testId.value,
+    },
+  }, 'background')
+
+  console.log('Open Test: ', test)
+  if (test?.action) {
+    goTo(VIEWS.TEST, { action: test?.action })
   }
 }
 </script>

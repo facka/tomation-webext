@@ -74,17 +74,6 @@ function goTo(view: VIEWS) {
   sidepanelStore.goTo(view)
 }
 
-async function handleStatusChange(status: 'no-url' | 'checking' | 'ok' | 'error') {
-  console.log('URL Status changed: ', status)
-  if (status === 'ok') { // when status is OK we should refresh the page
-    const activeTab = await useActiveTab().getActiveTab()
-
-    sendMessage('sidepanel-to-contentScript', {
-      cmd: 'refresh-page',
-    }, activeTab.destination)
-  }
-}
-
 async function reloadTests() {
   console.log('Reload tests')
   const activeTab = (await useActiveTab().getActiveTab()).destination
@@ -145,7 +134,7 @@ function openOptionsPage() {
             </button>
           </label>
           <input v-model="workspaceScriptURL" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
-          <UrlStatus :url="workspaceScriptURL" class="ml-2" @status="handleStatusChange" />
+          <UrlStatus :url="workspaceScriptURL" />
         </div>
         <button class="btn mt-2" @click="startProject">
           Start tomation project
@@ -161,10 +150,7 @@ function openOptionsPage() {
       </div>
     </div>
     <div v-if="workspace" class="flex items-center justify-between p-2">
-      <div>
-        <span class="opacity-50">Script URL:</span> {{ workspace?.script }}
-        <UrlStatus :url="workspace?.script" class="ml-2" @status="handleStatusChange" />
-      </div>
+      <UrlStatus :url="workspace?.script" 1 />
     </div>
   </nav>
   <main class="w-full px-2 py-2 text-gray-700">
@@ -192,7 +178,12 @@ function openOptionsPage() {
             </div>
           </div>
           <div>
-            <ActionViewer :action="(sidepanelStore.viewParams as any)?.action" />
+            <h3 class="font-bold mt-2">
+              {{ (sidepanelStore.viewParams as any)?.action.description }}
+            </h3>
+            <div v-for="(step, index) in (sidepanelStore.viewParams as any)?.action.steps" :key="index">
+              <ActionViewer :action="step" />
+            </div>
           </div>
         </div>
       </div>
