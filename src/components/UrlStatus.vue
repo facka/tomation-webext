@@ -69,7 +69,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <span class="inline-flex items-center space-x-2">
+  <span class="inline-flex items-center space-x-2 mt-1">
     <div class="flex-1 px-3 py-1 bg-gray-100 rounded border border-gray-300">
       <span class="text-sm text-gray-700 truncate">{{ url }}</span>
     </div>

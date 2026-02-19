@@ -20,8 +20,10 @@ const existingWorkspaces = ref<Workspace[]>([])
 const workspace = ref<Workspace | null>(null)
 const currentTabHost = ref<string>('')
 const currentTabTitle = ref<string>('')
-const workspaceName = ref('')
-const workspaceScriptURL = ref('')
+const newWorkspaceForm = {
+  name: ref<string>(''),
+  scriptURL: ref<string>(''),
+}
 
 async function updateActiveTabId() {
   const res = await useActiveTab().getActiveTab()
@@ -53,7 +55,8 @@ async function refresh() {
   // extract host from url
   currentTabHost.value = url ? new URL(url).host : ''
   currentTabTitle.value = tab.title || ''
-  workspaceName.value = currentTabTitle.value || ''
+  newWorkspaceForm.name.value = currentTabTitle.value || ''
+  newWorkspaceForm.scriptURL.value = ''
   const existentWorkspace: Workspace | null = await sendMessage('sidepanel-to-background', {
     cmd: WorkspaceCmd.GetForHost,
     params: { host: currentTabHost.value },
@@ -93,9 +96,9 @@ async function startProject() {
   const newWorkspace = await sendMessage('sidepanel-to-background', {
     cmd: WorkspaceCmd.Create,
     params: {
-      name: workspaceName.value.trim(),
+      name: newWorkspaceForm.name.value.trim(),
       host: currentTabHost.value,
-      script: workspaceScriptURL.value.trim() || undefined,
+      script: newWorkspaceForm.scriptURL.value.trim() || undefined,
     },
   }, 'background')
   workspace.value = newWorkspace as Workspace
@@ -124,7 +127,7 @@ function openOptionsPage() {
               <font-awesome-icon icon="fa-solid fa-circle-info" />
             </button>
           </label>
-          <input v-model="workspaceName" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
+          <input v-model="newWorkspaceForm.name.value" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
         </div>
         <div class="mb-3">
           <label class="block text-sm font-medium mb-1">
@@ -133,8 +136,8 @@ function openOptionsPage() {
               <font-awesome-icon icon="fa-solid fa-circle-info" />
             </button>
           </label>
-          <input v-model="workspaceScriptURL" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
-          <UrlStatus :url="workspaceScriptURL" />
+          <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
+          <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
         </div>
         <button class="btn mt-2" @click="startProject">
           Start tomation project
