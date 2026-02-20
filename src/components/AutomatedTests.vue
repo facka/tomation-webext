@@ -68,31 +68,38 @@ async function reloadTests() {
 </script>
 
 <template>
-  <ExpandableSection :title="`Automated Tests (${testsList.length})`" :loading="false" expanded>
-    <template #summary>
+  <div>
+    <div v-if="testsList.length === 0" class="p-4 text-center text-gray-500">
+      No automated tests found for this workspace.
+      <br>
+      Make sure you have a test automation script linked to this workspace and that it defines some tests.
+    </div>
+  </div>
+  <!-- navbar with search bar a refresh button and the filtered number of tests vs total number of tests -->
+  <div>
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="text-md font-semibold">
+        Automated Tests
+      </h3>
       <a class="cursor-pointer text-cyan-600" title="Reload tests" @click="reloadTests()">
         <font-awesome-icon icon="fa-solid fa-refresh" />
       </a>
-      <input
-        v-model="query"
-        class="border-b-2 border-gray-200 mx-1"
-        label="query"
-        placeholder="Type to search"
-      >
-    </template>
-    <div>
-      <div v-if="filteredPaths.length">
-        <div
-          v-for="(node, index) in testsTree.children"
-          :key="index"
-          :class="{ 'pb-2': index === (tests.length - 1) }"
-        >
-          <AutomatedTestsTreeNode :node="node" />
-        </div>
-      </div>
-      <div v-else>
-        No tests found that match "{{ query }}"
-      </div>
     </div>
-  </ExpandableSection>
+    <input v-model="query" name="query" class="w-full mb-1 border-b-2 border-gray-200" label="query" placeholder="Type to search">
+    <div class="flex items-center mb-2">
+      <span class="text-xs text-gray-400 ml-auto">Showing {{ filteredPaths.length }} of {{ testsList.length }} total tests</span>
+    </div>
+  </div>
+  <div v-if="filteredPaths.length">
+    <div
+      v-for="(node, index) in testsTree.children"
+      :key="index"
+      class="pb-1"
+    >
+      <AutomatedTestsTreeNode :node="node" />
+    </div>
+  </div>
+  <div v-else>
+    No tests found that match "{{ query }}"
+  </div>
 </template>

@@ -145,12 +145,7 @@ function openOptionsPage() {
       </form>
     </div>
     <div v-else class="p-2 bg-gray-100">
-      <div class="font-bold">
-        {{ workspace.name }}
-      </div>
-      <div class="text-sm text-gray-500">
-        {{ workspace.host }}
-      </div>
+      <span class="font-bold">{{ workspace.name }}</span> | <span class="text-sm text-gray-500">{{ workspace.host }}</span>
     </div>
     <div v-if="workspace" class="flex items-center justify-between p-2">
       <UrlStatus :url="workspace?.script" 1 />
