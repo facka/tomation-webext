@@ -41,7 +41,7 @@ watch(
   () => sidepanelStore.tabsInfoById,
   () => {
     if (activeTabId.value != null) {
-      isLoading.value = sidepanelStore.tabsInfoById[activeTabId.value].status === 'loading'
+      isLoading.value = sidepanelStore.tabsInfoById[activeTabId.value]?.status === 'loading'
       refresh()
     }
   },
