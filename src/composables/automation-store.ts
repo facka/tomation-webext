@@ -102,6 +102,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
     const commands: Record<string, (params?: any) => void> = {
       'tomation-test-started': ({ action }: any) => {
+        goTo(VIEWS.VIEWER)
         initialAction.value = action
         extractActions(initialAction.value)
         testStatus.value = 'running'
