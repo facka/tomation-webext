@@ -111,92 +111,100 @@ function openOptionsPage() {
 </script>
 
 <template>
-  <nav class="w-full">
-    <div v-if="!workspace">
-      <div class="p-2 bg-gray-200 font-bold">
-        No workspace found locally for this page {{ currentTabHost }}
+  <div class="flex flex-col h-full">
+    <!-- Top Navbar -->
+    <nav class="flex items-center justify-between p-2 bg-gray-100 border-b">
+      <div class="flex-1">
+        <div v-if="!workspace" class="text-sm font-medium text-gray-700">
+          No workspace for {{ currentTabHost }}
+        </div>
+        <div v-else class="text-sm font-medium text-gray-700">
+          <span class="font-bold">{{ workspace.name }}</span> | <span class="text-gray-500">{{ workspace.host }}</span>
+        </div>
       </div>
-      <form class="p-2" @submit.prevent="startProject">
-        <div class="mb-3 text-gray-800">
-          Start a tomation project to run tests directly from the page
+      <button
+        class="flex-none ml-2 p-1 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition"
+        title="Open settings and all workspaces"
+        @click="openOptionsPage()"
+      >
+        <font-awesome-icon icon="fa-solid fa-gear" />
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
+      <div v-show="isLoading" class="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="flex flex-col items-center gap-2 bg-white/80 px-4 py-3 rounded-lg shadow-lg">
+          <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-lg" />
+          <span>Loading...</span>
         </div>
-        <div class="mb-3">
-          <label class="block text-sm font-medium mb-1">
-            Workspace name
-            <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="A descriptive name for your workspace project">
-              <font-awesome-icon icon="fa-solid fa-circle-info" />
-            </button>
-          </label>
-          <input v-model="newWorkspaceForm.name.value" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
-        </div>
-        <div class="mb-3">
-          <label class="block text-sm font-medium mb-1">
-            Script URL
-            <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="URL pointing to your test automation script file">
-              <font-awesome-icon icon="fa-solid fa-circle-info" />
-            </button>
-          </label>
-          <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
-          <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
-        </div>
-        <button class="btn mt-2" @click="startProject">
-          Start tomation project
-        </button>
-      </form>
-    </div>
-    <div v-else class="p-2 bg-gray-100">
-      <span class="font-bold">{{ workspace.name }}</span> | <span class="text-sm text-gray-500">{{ workspace.host }}</span>
-    </div>
-    <div v-if="workspace" class="flex items-center justify-between p-2">
-      <UrlStatus :url="workspace?.script" 1 />
-    </div>
-  </nav>
-  <main class="w-full px-2 py-2 text-gray-700 relative">
-    <div v-show="isLoading" class="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="flex flex-col items-center gap-2 bg-white/80 px-4 py-3 rounded-lg shadow-lg">
-        <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-lg" />
-        <span>Loading...</span>
       </div>
-    </div>
-    <div v-show="!isLoading && workspace" class="mb-2">
-      <div v-if="workspace?.script">
-        <div v-if="sidepanelStore.view === 'VIEWER'">
-          <TaskExecutionViewer :action="sidepanelStore.initialAction" @@close="closeTaskExecutionViewer" />
+
+      <div v-if="!workspace" class="mb-2">
+        <div class="p-2 bg-gray-200 font-bold mb-3">
+          No workspace found locally for this page {{ currentTabHost }}
         </div>
-        <div v-else-if="sidepanelStore.view === 'MAIN'">
-          <AutomatedTests :tests="sidepanelStore.automatedTests" class="mt-2" />
-          <History class="mt-2" />
-        </div>
-        <div v-else-if="sidepanelStore.view === 'TEST'">
-          <div class="flex">
-            <div class="w-11/12 font-bold">
-              <div>Test inspector</div>
-            </div>
-            <div class="grow flex flex-row-reverse">
-              <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo(VIEWS.MAIN)">
-                <font-awesome-icon icon="fa-solid fa-times" />
+        <form class="p-2" @submit.prevent="startProject">
+          <div class="mb-3 text-gray-800">
+            Start a tomation project to run tests directly from the page
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium mb-1">
+              Workspace name
+              <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="A descriptive name for your workspace project">
+                <font-awesome-icon icon="fa-solid fa-circle-info" />
               </button>
-            </div>
+            </label>
+            <input v-model="newWorkspaceForm.name.value" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
           </div>
-          <div>
-            <h3 class="font-bold mt-2">
-              {{ (sidepanelStore.viewParams as any)?.action.description }}
-            </h3>
-            <div v-for="(step, index) in (sidepanelStore.viewParams as any)?.action.steps" :key="index">
-              <ActionViewer :action="step" />
+          <div class="mb-3">
+            <label class="block text-sm font-medium mb-1">
+              Script URL
+              <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="URL pointing to your test automation script file">
+                <font-awesome-icon icon="fa-solid fa-circle-info" />
+              </button>
+            </label>
+            <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
+            <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
+          </div>
+          <button class="btn mt-2" @click="startProject">
+            Start tomation project
+          </button>
+        </form>
+      </div>
+
+      <div v-show="workspace" class="mb-2">
+        <div v-if="workspace?.script">
+          <div v-if="sidepanelStore.view === 'VIEWER'">
+            <TaskExecutionViewer :action="sidepanelStore.initialAction" @@close="closeTaskExecutionViewer" />
+          </div>
+          <div v-else-if="sidepanelStore.view === 'MAIN'">
+            <UrlStatus :url="workspace?.script" class="mb-2" />
+            <AutomatedTests :tests="sidepanelStore.automatedTests" class="mt-2" />
+            <History class="mt-2" />
+          </div>
+          <div v-else-if="sidepanelStore.view === 'TEST'">
+            <div class="flex">
+              <div class="w-11/12 font-bold">
+                <div>Test inspector</div>
+              </div>
+              <div class="grow flex flex-row-reverse">
+                <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo(VIEWS.MAIN)">
+                  <font-awesome-icon icon="fa-solid fa-times" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <h3 class="font-bold mt-2">
+                {{ (sidepanelStore.viewParams as any)?.action.description }}
+              </h3>
+              <div v-for="(step, index) in (sidepanelStore.viewParams as any)?.action.steps" :key="index">
+                <ActionViewer :action="step" />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <div>
-      <div class="p-2 bg-blue-100 text-blue-800">
-        <div class="font-bold">
-          <a href="#" class="text-blue-600 hover:underline" @click.prevent="openOptionsPage()">
-            See all workspaces
-          </a>
-        </div>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
 </template>
