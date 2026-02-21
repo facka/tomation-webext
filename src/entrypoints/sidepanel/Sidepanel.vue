@@ -151,9 +151,12 @@ function openOptionsPage() {
       <UrlStatus :url="workspace?.script" 1 />
     </div>
   </nav>
-  <main class="w-full px-2 py-2 text-gray-700">
-    <div v-show="isLoading" class="my-2">
-      <font-awesome-icon icon="fa-solid fa-spinner" spin /> Loading...
+  <main class="w-full px-2 py-2 text-gray-700 relative">
+    <div v-show="isLoading" class="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="flex flex-col items-center gap-2 bg-white/80 px-4 py-3 rounded-lg shadow-lg">
+        <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-lg" />
+        <span>Loading...</span>
+      </div>
     </div>
     <div v-show="!isLoading && workspace" class="mb-2">
       <div v-if="workspace?.script">
