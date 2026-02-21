@@ -112,13 +112,10 @@ function openOptionsPage() {
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Top Navbar -->
-    <nav class="flex items-center justify-between p-2 bg-gray-100 border-b">
+    <!-- Top Navbar (only for workspace state) -->
+    <nav v-if="workspace" class="flex items-center justify-between p-2 bg-gray-100 border-b">
       <div class="flex-1">
-        <div v-if="!workspace" class="text-sm font-medium text-gray-700">
-          No workspace for {{ currentTabHost }}
-        </div>
-        <div v-else class="text-sm font-medium text-gray-700">
+        <div class="text-sm font-medium text-gray-700">
           <span class="font-bold">{{ workspace.name }}</span> | <span class="text-gray-500">{{ workspace.host }}</span>
         </div>
       </div>
@@ -140,37 +137,76 @@ function openOptionsPage() {
         </div>
       </div>
 
-      <div v-if="!workspace" class="mb-2">
-        <div class="p-2 bg-gray-200 font-bold mb-3">
-          No workspace found locally for this page {{ currentTabHost }}
+      <div v-if="!workspace" class="flex flex-col h-full">
+        <!-- Hero Section -->
+        <div class="text-center py-6 px-4">
+          <h1 class="text-2xl font-bold text-gray-800 mb-2">
+            Welcome to Tomation
+          </h1>
+          <p class="text-gray-600 text-sm">
+            Automate and test your web applications directly from your browser
+          </p>
         </div>
-        <form class="p-2" @submit.prevent="startProject">
-          <div class="mb-3 text-gray-800">
-            Start a tomation project to run tests directly from the page
+
+        <!-- Create Workspace Form -->
+        <div class="px-4 py-4 bg-white rounded-lg border border-gray-200 mb-6">
+          <h2 class="font-bold text-lg mb-4 text-gray-800">
+            Start a New Project
+          </h2>
+          <form @submit.prevent="startProject">
+            <div class="mb-3">
+              <label class="block text-sm font-medium mb-1 text-gray-700">
+                Workspace name
+                <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="A descriptive name for your workspace project">
+                  <font-awesome-icon icon="fa-solid fa-circle-info" />
+                </button>
+              </label>
+              <input v-model="newWorkspaceForm.name.value" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full text-sm" title="Give your workspace a descriptive name">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-1 text-gray-700">
+                Script URL
+                <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="URL pointing to your test automation script file">
+                  <font-awesome-icon icon="fa-solid fa-circle-info" />
+                </button>
+              </label>
+              <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full text-sm" title="URL to your test automation script">
+              <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
+            </div>
+            <button class="btn w-full" @click="startProject">
+              Start tomation project
+            </button>
+          </form>
+        </div>
+
+        <!-- Features Section -->
+        <div class="flex-1 px-4 pb-4">
+          <h3 class="font-bold text-gray-800 mb-3">
+            Key Features
+          </h3>
+          <div class="space-y-2 text-sm text-gray-700">
+            <div class="flex items-start gap-2">
+              <font-awesome-icon icon="fa-solid fa-check" class="text-green-600 mt-0.5 flex-shrink-0" />
+              <span>Run automated tests directly in your browser</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <font-awesome-icon icon="fa-solid fa-check" class="text-green-600 mt-0.5 flex-shrink-0" />
+              <span>Record and replay user interactions</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <font-awesome-icon icon="fa-solid fa-check" class="text-green-600 mt-0.5 flex-shrink-0" />
+              <span>Track test execution history</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <font-awesome-icon icon="fa-solid fa-check" class="text-green-600 mt-0.5 flex-shrink-0" />
+              <span>Manage multiple workspace projects</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <font-awesome-icon icon="fa-solid fa-check" class="text-green-600 mt-0.5 flex-shrink-0" />
+              <span>Monitor test status in real-time</span>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="block text-sm font-medium mb-1">
-              Workspace name
-              <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="A descriptive name for your workspace project">
-                <font-awesome-icon icon="fa-solid fa-circle-info" />
-              </button>
-            </label>
-            <input v-model="newWorkspaceForm.name.value" placeholder="e.g., My Project" class="border rounded px-2 py-1 w-full" title="Give your workspace a descriptive name">
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm font-medium mb-1">
-              Script URL
-              <button type="button" class="inline-ml-1 text-gray-500 hover:text-gray-700" title="URL pointing to your test automation script file">
-                <font-awesome-icon icon="fa-solid fa-circle-info" />
-              </button>
-            </label>
-            <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full" title="URL to your test automation script">
-            <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
-          </div>
-          <button class="btn mt-2" @click="startProject">
-            Start tomation project
-          </button>
-        </form>
+        </div>
       </div>
 
       <div v-show="workspace" class="mb-2">
