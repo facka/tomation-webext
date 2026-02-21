@@ -87,7 +87,7 @@ async function reloadTests() {
     </div>
     <input v-model="query" name="query" class="w-full mb-1 border-b-2 border-gray-200" label="query" placeholder="Type to search">
     <div class="flex items-center mb-2">
-      <span class="text-xs text-gray-400 ml-auto">Showing {{ filteredPaths.length }} of {{ testsList.length }} total tests</span>
+      <span class="text-[10px] text-gray-500 ml-auto">Showing {{ filteredPaths.length }} of {{ testsList.length }} total tests</span>
     </div>
   </div>
   <div v-if="filteredPaths.length">

@@ -69,36 +69,37 @@ onMounted(() => {
 </script>
 
 <template>
-  <span class="inline-flex items-center space-x-2 mt-1">
-    <div class="flex-1 px-3 py-1 bg-gray-100 rounded border border-gray-300">
-      <span class="text-sm text-gray-700 truncate">{{ url }}</span>
-    </div>
-    <div :title="message">
-      <template v-if="status === 'checking'">
-        <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
-      </template>
-      <template v-else-if="status === 'ok'">
-        <font-awesome-icon icon="fa-solid fa-circle-check" class="text-green-500" />
-      </template>
-      <template v-else-if="status === 'error'">
-        <font-awesome-icon icon="fa-solid fa-circle-xmark" class="text-red-500" />
-      </template>
-      <template v-else-if="status === 'no-url'">
-        <font-awesome-icon icon="fa-solid fa-circle" class="text-gray-300" />
-      </template>
-      <template v-else>
-        <font-awesome-icon icon="fa-solid fa-circle" class="text-gray-400" />
-      </template>
-    </div>
+  <div class="w-full px-2 py-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+    <span class="text-xs text-gray-700 truncate flex-1">{{ url }}</span>
 
-    <button
-      v-if="status !== 'checking' && status !== 'no-url'"
-      type="button"
-      class="ml-2 text-xs underline"
-      :title="`Re-check URL ${displayTime ? `(last checked at ${displayTime})` : ''}`"
-      @click="checkUrl(props.url)"
-    >
-      Check
-    </button>
-  </span>
+    <div class="flex items-center gap-3">
+      <div :title="message" class="flex-shrink-0">
+        <template v-if="status === 'checking'">
+          <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500 text-base" />
+        </template>
+        <template v-else-if="status === 'ok'">
+          <font-awesome-icon icon="fa-solid fa-circle-check" class="text-green-500 text-base" />
+        </template>
+        <template v-else-if="status === 'error'">
+          <font-awesome-icon icon="fa-solid fa-circle-xmark" class="text-red-500 text-base" />
+        </template>
+        <template v-else-if="status === 'no-url'">
+          <font-awesome-icon icon="fa-solid fa-circle" class="text-gray-300 text-base" />
+        </template>
+        <template v-else>
+          <font-awesome-icon icon="fa-solid fa-circle" class="text-gray-400 text-base" />
+        </template>
+      </div>
+
+      <button
+        v-if="status === 'error'"
+        type="button"
+        class="flex-shrink-0 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition"
+        :title="`Re-check URL ${displayTime ? `(last checked at ${displayTime})` : ''}`"
+        @click="checkUrl(props.url)"
+      >
+        Check
+      </button>
+    </div>
+  </div>
 </template>
