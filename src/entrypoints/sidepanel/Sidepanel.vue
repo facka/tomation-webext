@@ -130,7 +130,7 @@ function openOptionsPage() {
 
     <!-- Main Content -->
     <main class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
-      <div v-show="isLoading" class="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div v-show="isLoading" class="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-1000">
         <div class="flex flex-col items-center gap-2 bg-white/80 px-4 py-3 rounded-lg shadow-lg">
           <font-awesome-icon icon="fa-solid fa-spinner" spin class="text-lg" />
           <span>Loading...</span>
