@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, toRaw } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
-import Expandable from '../design-system/Expandable.vue'
-import { useActiveTab } from '~/composables/useActiveTab'
-import { tomationStorage } from '~/logic/storage'
+import Expandable from '@/components/design-system/Expandable.vue'
 import { VIEWS } from '~/logic/views'
 
 const props = defineProps<{
   node: TreeNode
 }>()
+
+const sidepanelStore = useAutomationStore()
+
 const node = computed(() => props.node)
 const testId = computed(() => {
   if (node.value.path) {
@@ -19,7 +19,7 @@ const testId = computed(() => {
   }
 })
 
-interface TreeNode {
+type TreeNode = {
   name: string
   path: string
   children: TreeNode[]
@@ -37,15 +37,21 @@ async function runTest(testId: string) {
 }
 
 function goTo(view: VIEWS, viewParams: any = {}) {
-  tomationStorage.value.view = view
-  tomationStorage.value.viewParams = viewParams
+  sidepanelStore.goTo(view, viewParams)
 }
 
-function openTest() {
-  const action = tomationStorage.value.automatedTests[testId.value].action
-  console.log('Open Test: ', toRaw(action))
-  if (action) {
-    goTo(VIEWS.TEST, { action })
+async function openTest() {
+  console.log('Opening test with id:', testId.value)
+  const test: any = await sendMessage('sidepanel-to-background', {
+    cmd: 'get-test-by-id',
+    params: {
+      testId: testId.value,
+    },
+  }, 'background')
+
+  console.log('Open Test: ', test)
+  if (test?.action) {
+    goTo(VIEWS.TEST, { action: test?.action })
   }
 }
 </script>

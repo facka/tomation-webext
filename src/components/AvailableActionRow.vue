@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { sendMessage } from 'webext-bridge/popup'
-import { useActiveTab } from '~/composables/useActiveTab'
 
 const props = defineProps<{
   action: string

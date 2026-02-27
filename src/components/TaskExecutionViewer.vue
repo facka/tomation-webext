@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { sendMessage } from 'webext-bridge/popup'
-import ActionViewer from './ActionViewer.vue'
-import { useActiveTab } from '~/composables/useActiveTab'
-import { useAutomationStore } from '~/sidepanel/automation-store'
+import ActionViewer from '@/components/ActionViewer.vue'
 
 const props = defineProps<{
   action: any
