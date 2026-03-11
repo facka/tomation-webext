@@ -2,6 +2,7 @@
 const props = defineProps<{
   url?: string | null
   timeout?: number
+  compact?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -69,8 +70,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full px-2 py-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between gap-3">
-    <span class="text-xs text-gray-700 truncate flex-1">{{ url }}</span>
+  <div
+    class="py-1 flex items-center justify-between gap-3"
+    :class="compact
+      ? ''
+      : 'px-2 w-full bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm'"
+  >
+    <span v-if="!compact" class="text-xs text-gray-700 truncate flex-1">{{ url }}</span>
 
     <div class="flex items-center gap-3">
       <div :title="message" class="flex-shrink-0">
@@ -92,7 +98,7 @@ onMounted(() => {
       </div>
 
       <button
-        v-if="status === 'error'"
+        v-if="!compact && status === 'error'"
         type="button"
         class="flex-shrink-0 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition"
         :title="`Re-check URL ${displayTime ? `(last checked at ${displayTime})` : ''}`"

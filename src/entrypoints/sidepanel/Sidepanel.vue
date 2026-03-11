@@ -170,8 +170,10 @@ function openOptionsPage() {
                   <font-awesome-icon icon="fa-solid fa-circle-info" />
                 </button>
               </label>
-              <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 w-full text-sm" title="URL to your test automation script">
-              <UrlStatus v-if="newWorkspaceForm.scriptURL.value" :url="newWorkspaceForm.scriptURL.value" />
+              <div class="flex gap-2 items-center">
+                <input v-model="newWorkspaceForm.scriptURL.value" placeholder="https://example.com/script.js" required class="border rounded px-2 py-1 flex-1 text-sm" title="URL to your test automation script">
+                <UrlStatus v-if="newWorkspaceForm.scriptURL.value" compact :url="newWorkspaceForm.scriptURL.value" />
+              </div>
             </div>
             <button class="btn w-full" @click="startProject">
               Start tomation project
