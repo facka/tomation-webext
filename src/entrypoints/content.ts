@@ -100,8 +100,7 @@ async function init() {
 
 export default defineContentScript({
   matches: ['*://*/*'],
-  main(ctx) {
-    console.log({ ctx })
+  main() {
     init()
   },
 })

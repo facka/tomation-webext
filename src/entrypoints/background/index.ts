@@ -1,5 +1,6 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
+import { clearSession, createSession } from '@/runtime/execution/execution-session.store'
 import { useActiveTab } from '~/composables/useActiveTab'
 // import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
 import TomationStorage from '~/logic/storage'
@@ -47,6 +48,10 @@ export default defineBackground(() => {
     updateSidePanel(activeInfo.tabId)
   })
 
+  browser.tabs.onRemoved.addListener((tabId) => {
+    clearSession(tabId)
+  })
+
   // Function to send a message to the side panel
   function updateSidePanel(tabId: number) {
     // Query the active tab's details
@@ -88,6 +93,20 @@ export default defineBackground(() => {
         browser.action.setBadgeBackgroundColor({ color: '#33BB33' })
 
         console.log('[tomation-webext][background] Test started:', params.action)
+
+        const activeTab = await useActiveTab().getActiveTab()
+        const host = new URL(activeTab.tab?.url ?? '').host
+        const workspace = await workspaceHandlers[WorkspaceCmd.GetForHost]({ host: host ?? '' })
+        if (!workspace) {
+          console.error(`[tomation-webext][background] No workspace found for host ${host}. Cannot start test.`)
+          return
+        }
+        createSession({
+          workspaceId: workspace.id,
+          tabId: params.tabId,
+          initialAction: params.action,
+        })
+
         const initialAction = params.action
 
         await TomationStorage.actionsById.setValue({})
@@ -97,6 +116,7 @@ export default defineBackground(() => {
         await TomationStorage.initialAction.setValue(params.action)
         extractActions(await TomationStorage.initialAction.getValue())
 
+        console.log('[tomation-webext][background] Setting view to VIEWER')
         await TomationStorage.view.setValue(VIEWS.VIEWER)
         await TomationStorage.memory.setValue([])
 
