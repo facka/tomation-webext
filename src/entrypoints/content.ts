@@ -35,7 +35,7 @@ async function init() {
   console.info('[tomation-webext] Running content script...')
 
   const workspace = await sendToBackground({ cmd: 'get-workspace' }) as Workspace
-  console.log(`[tomation-webext] Script: `, workspace.script)
+  console.log(`[tomation-webext] Script: `, workspace?.script)
 
   window.addEventListener('message', (event: any) => {
     // console.log('[tomation-webext] window message event', event)
@@ -55,12 +55,17 @@ async function init() {
     }
   })
 
-  try {
-    console.info(`[tomation-webext] Injecting script for host ${workspace.host} from URL: ${workspace.script}`)
-    injectFromURL(workspace.script)
+  if (workspace?.script) {
+    try {
+      console.info(`[tomation-webext] Injecting script for host ${workspace.host} from URL: ${workspace.script}`)
+      injectFromURL(workspace.script)
+    }
+    catch (err) {
+      console.error('[tomation-webext] Failed to read scriptURL from workspace', err)
+    }
   }
-  catch (err) {
-    console.error('[tomation-webext] Failed to read scriptURL from workspace', err)
+  else {
+    console.info('[tomation-webext] No script defined for this workspace, skipping injection')
   }
 
   onMessage('sidepanel-to-contentScript', ({ data }: any) => {
