@@ -7,41 +7,6 @@ const view = storage.defineItem<VIEWS>(
   },
 )
 
-const sessionId = storage.defineItem<string>(
-  'local:sessionId',
-  {
-    fallback: '',
-  },
-)
-
-const initialAction = storage.defineItem<object>(
-  'local:initialAction',
-  {
-    fallback: {},
-  },
-)
-
-const actionsById = storage.defineItem<object>(
-  'local:actionsById',
-  {
-    fallback: {},
-  },
-)
-
-const automatedTests = storage.defineItem<object>(
-  'local:automatedTests',
-  {
-    fallback: {},
-  },
-)
-
-const currentRunningTest = storage.defineItem<object>(
-  'local:currentRunningTest',
-  {
-    fallback: {},
-  },
-)
-
 const history = storage.defineItem<Array<object>>(
   'local:history',
   {
@@ -58,11 +23,6 @@ const memory = storage.defineItem<Array<object>>(
 
 export default {
   view,
-  sessionId,
-  initialAction,
-  actionsById,
-  automatedTests,
-  currentRunningTest,
   history,
   memory,
 }

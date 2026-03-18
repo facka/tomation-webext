@@ -8,6 +8,7 @@ async function sendToBackground(payload: any = { hello: 'background' }) {
     return resp
   }
   catch (err) {
+    console.log('[tomation-webext] Failed to send message to background: payload', payload)
     console.error('[tomation-webext] Failed to send message to background', err)
   }
 }
@@ -34,7 +35,12 @@ function injectFromURL(url: string | undefined) {
 async function init() {
   console.info('[tomation-webext] Running content script...')
 
-  const workspace = await sendToBackground({ cmd: 'get-workspace' }) as Workspace
+  const workspace = await sendToBackground({
+    cmd: 'get-workspace',
+    params: {
+      url: window.location.href,
+    },
+  }) as Workspace
   console.log(`[tomation-webext] Script: `, workspace?.script)
 
   window.addEventListener('message', (event: any) => {
@@ -105,8 +111,7 @@ async function init() {
 
 export default defineContentScript({
   matches: ['*://*/*'],
-  main(ctx) {
-    console.log({ ctx })
+  main() {
     init()
   },
 })

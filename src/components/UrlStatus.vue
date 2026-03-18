@@ -7,6 +7,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'status', status: 'no-url' | 'checking' | 'ok' | 'error'): void
+  (e: 'success'): void
 }>()
 
 const CHECK_TIMEOUT = props.timeout ?? 3000
@@ -18,6 +19,7 @@ const message = ref('')
 const lastCheckedAt = ref<number | null>(null)
 
 async function checkUrl(u?: string | null) {
+  const previousStatus = status.value
   if (!u) {
     status.value = 'no-url'
     message.value = 'No URL'
@@ -41,6 +43,9 @@ async function checkUrl(u?: string | null) {
     if (resp.ok) {
       status.value = 'ok'
       message.value = `OK (${resp.status})`
+      if (previousStatus !== 'ok') {
+        emit('success')
+      }
     }
     else {
       status.value = 'error'

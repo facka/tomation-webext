@@ -1,3 +1,5 @@
+import type { TestRun } from '@/runtime/testrun/testrun.types'
+import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { onMessage } from 'webext-bridge/popup'
@@ -27,20 +29,31 @@ function loadStoredValue<T>(prop: string, defaultValue: T) {
 
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
-  const initialAction: any = ref({})
+  // const initialAction: any = ref({})
   const currentActionId: any = ref({})
-  const actionsById = loadStoredValue<any>('actionsById', {})
+  // const actionsById = loadStoredValue<any>('actionsById', {})
   const view = loadStoredValue<VIEWS>('view', VIEWS.MAIN)
   const viewParams = ref({})
-  const testStatus = ref('idle') // idle, running, paused, stopped
+  // const testStatus = ref('idle') // idle, running, paused, stopped
   const tabsInfoById: Ref<Record<number, any>> = ref({}) // tabId -> { status, url, ... }
-  const automatedTests = loadStoredValue<Record<string, any>>('automatedTests', {})
+  // const automatedTests = loadStoredValue<Record<string, any>>('automatedTests', {})
   const history = ref<Array<object>>([])
+  const expectedUrlMatch = ref<string>('')
+  const mismatchUrl = ref<string>('')
+  const tomationSession = ref<TomationSession>({
+    id: 'UNKNOWN_SESSION',
+    workspaceId: '',
+    tabId: -1,
+    connected: false,
+    automatedTests: {},
+  })
+
+  const testRun = ref<TestRun | null>(null)
 
   function setTabInfo(tabId: number, info: { status: string, url: string }) {
     tabsInfoById.value[tabId] = info
   }
-
+  /*
   function extractActions(action: any) {
     if (action.steps) {
       action.steps.forEach((action: any) => extractActions(action))
@@ -54,12 +67,17 @@ export const useAutomationStore = defineStore('automationStore', () => {
   function getActionById(actionId: string) {
     return actionsById.value[actionId]
   }
+  */
+  function getTomationSession() {
+    return tomationSession.value
+  }
 
+  /*
   function setData(data: any) {
     console.log('Store.setData(): Automated Tests: ', data.automatedTests)
     automatedTests.value = data.automatedTests
     actionsById.value = data.actionsById
-  }
+  } */
 
   /*
   async function getLargeDataFromBackground() {
@@ -101,16 +119,17 @@ export const useAutomationStore = defineStore('automationStore', () => {
     console.log('[tomation-webext][popup] received background-to-popup message:', cmd, params)
 
     const commands: Record<string, (params?: any) => void> = {
-      'tomation-test-started': ({ action }: any) => {
+      'tomation-test-started': (params: any) => {
+        testRun.value = params.testRun
         goTo(VIEWS.VIEWER)
-        initialAction.value = action
-        extractActions(initialAction.value)
-        testStatus.value = 'running'
+        // initialAction.value = action
+        // extractActions(initialAction.value)
+        testRun.value && (testRun.value.status = 'running')
       },
       'tomation-action-update': ({ action }: any) => {
-        const existingAction = actionsById.value[action.id]
+        const existingAction = testRun.value?.actionsById.get(action.id)
         if (!existingAction) {
-          actionsById.value[action.id] = action
+          testRun.value?.actionsById.set(action.id, action)
         }
         else {
           existingAction.status = action.status
@@ -121,13 +140,47 @@ export const useAutomationStore = defineStore('automationStore', () => {
         currentActionId.value = action.id
       },
       'tomation-test-pause': () => {
-        testStatus.value = 'paused'
+        testRun.value && (testRun.value.status = 'paused')
       },
       'tomation-test-play': () => {
-        testStatus.value = 'running'
+        testRun.value && (testRun.value.status = 'running')
       },
       'tomationwebext-tab-updated': ({ tabId, status, tabUrl }: any) => {
         setTabInfo(tabId, { status, url: tabUrl })
+      },
+      'tomation-session-created': (params: any) => {
+        const newTomationSession = params
+        tomationSession.value = newTomationSession
+        console.log(`[tomation-webext][popup] Session initialized with session:`, tomationSession)
+        mismatchUrl.value = ''
+        expectedUrlMatch.value = ''
+        // Optionally, you can store the sessionId in the store if needed for future use
+      },
+      'tomation-session-connected': ({ sessionId }: any) => {
+        if (tomationSession.value.id === sessionId) {
+          tomationSession.value.connected = true
+          console.log(`[tomation-webext][popup] Session ${sessionId} is now connected`)
+        }
+        else {
+          console.warn(`[tomation-webext][popup] Received connection event for unknown sessionId ${sessionId}`)
+        }
+      },
+      'tomation-url-mismatch': ({ matches, url }: any) => {
+        console.warn(`[tomation-webext][popup] URL mismatch detected. Expected: ${matches}, Actual: ${url}`)
+        // Optionally, you can set some state here to show a warning in the UI about the URL mismatch
+        mismatchUrl.value = url
+        expectedUrlMatch.value = matches
+      },
+      'tomation-register-test': ({ sessionId, id, action }: any) => {
+        if (tomationSession.value.id === sessionId) {
+          tomationSession.value.automatedTests[id] = {
+            initialAction: action,
+          }
+          console.log(`[tomation-webext][popup] Registered test ${id} for session ${sessionId}`)
+        }
+        else {
+          console.warn(`[tomation-webext][popup] Received register test event for unknown sessionId ${sessionId}`)
+        }
       },
     }
 
@@ -141,17 +194,13 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
   return {
     dataError,
-    automatedTests,
-    initialAction,
     currentActionId,
     view,
     viewParams,
-    testStatus,
     tabsInfoById,
     history,
-    getActionById,
-    setData,
     goTo,
     setTabInfo,
+    getTomationSession,
   }
 })
