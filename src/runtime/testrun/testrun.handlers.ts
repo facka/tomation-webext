@@ -11,6 +11,7 @@ export const TestRunCmd = {
   TestEnd: 'test-end',
   TestPause: 'test-pause',
   TestPlay: 'test-play',
+  GetBySessionId: 'get-by-session-id',
 } as const
 
 export type TestRunCmdType = (typeof TestRunCmd)[keyof typeof TestRunCmd]
@@ -52,6 +53,11 @@ export type TestRunMessages = {
   }
 
   [TestRunCmd.TestPlay]: {
+    params: { sessionId: string }
+    result: TestRun
+  }
+
+  [TestRunCmd.GetBySessionId]: {
     params: { sessionId: string }
     result: TestRun
   }
@@ -108,6 +114,11 @@ const handlers: { [K in TestRunCmdType]: Handler<K> } = {
   async [TestRunCmd.TestPlay](params) {
     const { sessionId } = params
     return testrunStore.playTestRun(sessionId)
+  },
+
+  async [TestRunCmd.GetBySessionId](params) {
+    const { sessionId } = params
+    return testrunStore.getBySessionId(sessionId)
   },
 }
 
