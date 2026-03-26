@@ -69,7 +69,7 @@ function reloadPage() {
   <main v-if="!loading" class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
     <div v-if="sidepanelStore.getTomationSession()?.connected ">
       <div v-if="sidepanelStore.view === 'VIEWER'">
-        <TaskExecutionViewer :action="sidepanelStore.initialAction" @@close="closeTaskExecutionViewer" />
+        <TaskExecutionViewer :action="sidepanelStore.getTestRun(sidepanelStore.getTomationSession()?.tabId)?.initialAction" @@close="closeTaskExecutionViewer" />
       </div>
       <div v-else-if="sidepanelStore.view === 'MAIN'">
         <UrlStatus :url="workspace?.script" class="mb-2" />

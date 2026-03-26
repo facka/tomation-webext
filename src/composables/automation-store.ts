@@ -1,38 +1,21 @@
+import type { Workspace } from '@/logic/workspace/workspace.types'
 import type { TestRun } from '@/runtime/testrun/testrun.types'
 import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { onMessage } from 'webext-bridge/popup'
+import { onMessage, sendMessage } from 'webext-bridge/popup'
+import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
+import { TestRunCmd } from '@/runtime/testrun/testrun.handlers'
+import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 // import { sendChunkedMessage } from 'ext-send-chunked-message'
 import { VIEWS } from '~/logic/views'
-
-function loadStoredValue<T>(prop: string, defaultValue: T) {
-  // It should create the vue ref load from useStoredValue and add watch logic to update the value
-  const { state: storedValue } = useStoredValue<T>(`local:${prop}`, defaultValue)
-
-  console.log(`Loaded stored value for ${prop}:`, storedValue.value)
-
-  const reference = ref<T>(storedValue.value ?? defaultValue)
-
-  // Watch for changes in storedValue and update value accordingly
-  watch(storedValue, (newVal) => {
-    console.log(`Stored value for ${prop} changed:`, newVal)
-    if (newVal) { // Looks like sometimes newVal is null when localStorage is empty, so we skip this null value
-      reference.value = newVal
-    }
-  }, {
-    deep: true,
-  })
-
-  return reference
-}
 
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
   // const initialAction: any = ref({})
   const currentActionId: any = ref({})
   // const actionsById = loadStoredValue<any>('actionsById', {})
-  const view = loadStoredValue<VIEWS>('view', VIEWS.MAIN)
+  const view = ref(VIEWS.MAIN)
   const viewParams = ref({})
   // const testStatus = ref('idle') // idle, running, paused, stopped
   const tabsInfoById: Ref<Record<number, any>> = ref({}) // tabId -> { status, url, ... }
@@ -49,6 +32,64 @@ export const useAutomationStore = defineStore('automationStore', () => {
   })
 
   const testRun = ref<TestRun | null>(null)
+  const isLoading = ref(true)
+  const activeTabId = ref<any>(null)
+  const workspace = ref<Workspace | null>(null)
+  const currentTabHost = ref<string>('')
+
+  initializeStore()
+
+  async function updateActiveTabId() {
+    const res = await useActiveTab().getActiveTab()
+    activeTabId.value = res?.tab?.id ?? null
+    isLoading.value = activeTabId.value != null && tabsInfoById.value[activeTabId.value]?.status === 'loading'
+  }
+
+  // Keep isLoading updated when tabInfo changes
+  watch(
+    () => tabsInfoById.value,
+    () => {
+      if (activeTabId.value != null) {
+        isLoading.value = tabsInfoById.value[activeTabId.value]?.status === 'loading'
+        initializeStore()
+      }
+    },
+    { deep: true },
+  )
+
+  async function initializeStore() {
+    console.log('Initializing automation store...')
+    updateActiveTabId()
+    const { tab } = await useActiveTab().getActiveTab()
+    const url = tab.url
+    // extract host from url
+    currentTabHost.value = url ? new URL(url).host : ''
+    const existentWorkspace: Workspace | null = await sendMessage('sidepanel-to-background', {
+      cmd: WorkspaceCmd.GetForHost,
+      params: { host: currentTabHost.value },
+    }, 'background')
+    workspace.value = existentWorkspace
+    if (existentWorkspace) {
+      const existentSession: TomationSession = await sendMessage('sidepanel-to-background', {
+        cmd: TomationSessionCmd.GetByTabId,
+        params: { tabId: tab.id },
+      }, 'background')
+      tomationSession.value = existentSession
+      // get test run for this tab if session exists
+      if (existentSession) {
+        const existentTestRun = await sendMessage('sidepanel-to-background', {
+          cmd: TestRunCmd.GetBySessionId,
+          params: { sessionId: existentSession.id },
+        }, 'background')
+        testRun.value = existentTestRun as unknown as TestRun
+        if (existentTestRun) {
+          goTo(VIEWS.VIEWER)
+        }
+      }
+    }
+
+    isLoading.value = false
+  }
 
   function setTabInfo(tabId: number, info: { status: string, url: string }) {
     tabsInfoById.value[tabId] = info
@@ -70,6 +111,14 @@ export const useAutomationStore = defineStore('automationStore', () => {
   */
   function getTomationSession() {
     return tomationSession.value
+  }
+
+  function getTestRun(tabId: number): TestRun | null {
+    if (!tomationSession.value || tomationSession.value.tabId !== tabId) {
+      console.warn(`No session found for tabId ${tabId}. Cannot get test run.`)
+      return null
+    }
+    return testRun.value
   }
 
   /*
@@ -157,7 +206,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
         // Optionally, you can store the sessionId in the store if needed for future use
       },
       'tomation-session-connected': ({ sessionId }: any) => {
-        if (tomationSession.value.id === sessionId) {
+        if (tomationSession.value?.id === sessionId) {
           tomationSession.value.connected = true
           console.log(`[tomation-webext][popup] Session ${sessionId} is now connected`)
         }
@@ -199,8 +248,16 @@ export const useAutomationStore = defineStore('automationStore', () => {
     viewParams,
     tabsInfoById,
     history,
+    isLoading,
+    expectedUrlMatch,
+    mismatchUrl,
+    tomationSession,
+    testRun,
+    workspace,
+    activeTabId,
     goTo,
     setTabInfo,
     getTomationSession,
+    getTestRun,
   }
 })
