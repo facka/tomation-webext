@@ -1,8 +1,8 @@
-import tomation from 'tomation'
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
 import { TestRunCmd, testrunHandlers } from '@/runtime/testrun/testrun.handlers'
 import { testRunToJSON } from '@/runtime/testrun/testrun.model'
+import { tomationSessionHandlers } from '@/runtime/tomation-session/tomation-session.handlers'
 import {
   clearTomationSession,
   createTomationSession,
@@ -40,7 +40,7 @@ export default defineBackground(() => {
 
       sendMessage('background-to-popup', {
         cmd: 'tomationwebext-tab-updated',
-        params: { tabId, status: changeInfo.status, tabUrl: tab.url },
+        params: { tabId, status: changeInfo.status, tabUrl: tab.url } as any,
       }, 'popup')
 
       // Only act if the tab is the active one in its window and the update is complete
@@ -230,6 +230,8 @@ export default defineBackground(() => {
     const { cmd, params } = (data as any) || {}
     const handlers = {
       ...workspaceHandlers,
+      ...tomationSessionHandlers,
+      ...testrunHandlers,
       'get-test-by-id': async (params: any) => {
         const automatedTests = await TomationStorage.automatedTests.getValue() as Record<string, any>
         return automatedTests[params.testId]
