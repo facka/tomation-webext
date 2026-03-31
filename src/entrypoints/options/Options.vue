@@ -1,18 +1,37 @@
 <script setup lang="ts">
 import type { Workspace } from '@/logic/workspace/workspace.types'
-import { onMounted, ref, watch } from 'vue'
+import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
+import { onMounted, ref } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
 
 const allWorkspaces = ref<Workspace[]>([])
 
+const selectedWorkspace = ref<Workspace | null>(null)
+const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
+const loadingSessionsForSelectedWorkspace = ref(false)
+
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
   allWorkspaces.value = await sendMessage('options-to-background', {
     cmd: WorkspaceCmd.GetAll,
   }, 'background')
+
+  if (allWorkspaces.value.length > 0) {
+    await selectWorkspace(allWorkspaces.value[0])
+  }
 })
+
+async function selectWorkspace(workspace: Workspace) {
+  selectedWorkspace.value = workspace
+  loadingSessionsForSelectedWorkspace.value = true
+  sessionsForSelectedWorkspace.value = await sendMessage('options-to-background', {
+    cmd: 'tomation-session-get-by-workspace-id',
+    params: { workspaceId: workspace.id },
+  }, 'background')
+  loadingSessionsForSelectedWorkspace.value = false
+}
 
 async function deleteWorkspace(id: string) {
   await sendMessage('options-to-background', {
@@ -20,27 +39,155 @@ async function deleteWorkspace(id: string) {
     params: { id },
   }, 'background')
   allWorkspaces.value = allWorkspaces.value.filter(ws => ws.id !== id)
+
+  if (selectedWorkspace.value?.id === id) {
+    selectedWorkspace.value = null
+    sessionsForSelectedWorkspace.value = []
+    if (allWorkspaces.value.length > 0) {
+      await selectWorkspace(allWorkspaces.value[0])
+    }
+  }
+}
+
+function testsCount(session: TomationSession): number {
+  return Object.keys(session.automatedTests ?? {}).length
+}
+
+function goToTab(tabId: number) {
+  browser.tabs.update(tabId, { active: true })
+}
+
+function getMinifiedStep(step: any) {
+  if (step.steps && step.steps.length > 0) {
+    return {
+      description: step.description,
+      steps: step.steps.map((s: any) => getMinifiedStep(s)),
+    }
+  }
+  else {
+    return step.description
+  }
+}
+
+function getMinifiedTestsFromSession(session: TomationSession) {
+  const minifiedTests: Record<string, any> = {}
+  for (const [testId, test] of Object.entries(session.automatedTests ?? {})) {
+    minifiedTests[testId] = {
+      name: test.name,
+      initialAction: getMinifiedStep(test.initialAction),
+    }
+  }
+  return minifiedTests
 }
 </script>
 
 <template>
-  <main class="px-4 py-10 text-center text-gray-700 dark:text-gray-200">
-    <img :src="logo" class="icon-btn mx-2" alt="extension icon">
-    <h1 class="mt-6 text-xl">
-      Tomation Web Extension Options
-    </h1>
+  <main class="min-h-screen px-6 py-8 text-gray-700 bg-slate-50">
+    <header class="mb-6 flex items-center gap-4">
+      <img :src="logo" width="32" height="32" class="icon-btn" alt="extension icon">
+      <h1 class="text-xl font-semibold text-slate-800">
+        Tomation Web Extension Options
+      </h1>
+    </header>
 
-    <div v-if="allWorkspaces.length > 0" class="p-2">
-      <div class="p-2 font-bold  bg-blue-100 text-blue-800">
-        Workspaces created in this extension:
-      </div>
-      <div class="flex flex-col">
-        <div v-for="ws in allWorkspaces" :key="ws.id" class="flex justify-between items-center p-2">
-          <div><span class="text-gray-700 font-bold">{{ ws.name }} ({{ ws.host }})</span> <span>Linked to: {{ ws.script }}</span></div>
-          <button class="text-red-500" title="Delete" @click="deleteWorkspace(ws.id)">
-            <font-awesome-icon icon="fa-solid fa-trash" />
-          </button>
-        </div>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="grid min-h-[32rem] grid-cols-1 lg:grid-cols-[22rem_1fr]">
+        <aside class="border-b lg:border-b-0 lg:border-r border-slate-200">
+          <div class="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-slate-500 bg-slate-100">
+            Workspaces
+          </div>
+
+          <div v-if="allWorkspaces.length === 0" class="p-4 text-sm text-slate-500">
+            No workspaces found.
+          </div>
+
+          <ul v-else class="divide-y divide-slate-100">
+            <li
+              v-for="ws in allWorkspaces"
+              :key="ws.id"
+              class="flex items-center justify-between gap-2 p-3"
+              :class="selectedWorkspace?.id === ws.id ? 'bg-teal-50' : 'hover:bg-slate-50'"
+            >
+              <button class="flex-1 text-left" @click="selectWorkspace(ws)">
+                <div class="text-sm font-semibold text-slate-800">
+                  {{ ws.name }}
+                </div>
+                <div class="text-xs text-slate-500 truncate">
+                  {{ ws.host }}
+                </div>
+              </button>
+              <button class="text-red-500" title="Delete workspace" @click="deleteWorkspace(ws.id)">
+                <font-awesome-icon icon="fa-solid fa-trash" />
+              </button>
+            </li>
+          </ul>
+        </aside>
+
+        <section class="p-5">
+          <div v-if="selectedWorkspace" class="space-y-4">
+            <div class="border-b border-slate-200 pb-3">
+              <h2 class="text-lg font-semibold text-slate-800">
+                {{ selectedWorkspace.name }}
+              </h2>
+              <p class="text-sm text-slate-500">
+                Host: {{ selectedWorkspace.host }}
+              </p>
+              <p class="text-sm text-slate-500 break-all">
+                Script: {{ selectedWorkspace.script }}
+              </p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold tracking-wide uppercase text-slate-600 mb-3">
+                Sessions
+              </h3>
+
+              <div v-if="loadingSessionsForSelectedWorkspace" class="text-sm text-slate-500">
+                Loading sessions...
+              </div>
+
+              <div v-else-if="sessionsForSelectedWorkspace.length === 0" class="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                No sessions found for this workspace.
+              </div>
+
+              <ul v-else class="space-y-2">
+                <li
+                  v-for="session in sessionsForSelectedWorkspace"
+                  :key="session.id"
+                  class="rounded-md border border-slate-200 bg-slate-50 p-3"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="text-sm font-medium text-slate-700">
+                      Session {{ session.id }}
+                    </div>
+                    <span
+                      class="rounded-full px-2 py-0.5 text-xs font-medium"
+                      :class="session.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'"
+                    >
+                      {{ session.connected ? 'Connected' : 'Disconnected' }}
+                    </span>
+                  </div>
+                  <button
+                    class="mt-2 text-xs text-teal-700 underline decoration-transparent underline-offset-2 transition hover:text-teal-800 hover:decoration-current"
+                    @click="goToTab(session.tabId)"
+                  >
+                    Tab ID: {{ session.tabId }}
+                  </button>
+                  <div>
+                    <div class="mt-2 text-xs font-semibold text-slate-600">
+                      Automated Tests ({{ testsCount(session) }}):
+                    </div>
+                    <pre class="mt-2 max-h-40 overflow-auto rounded bg-slate-100 p-2 text-xs text-slate-700">{{ JSON.stringify(getMinifiedTestsFromSession(session), null, 2) }}</pre>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div v-else class="h-full flex items-center justify-center text-sm text-slate-500">
+            Select a workspace to view its sessions.
+          </div>
+        </section>
       </div>
     </div>
   </main>
