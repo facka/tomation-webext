@@ -60,8 +60,7 @@ function goToTab(tabId: number) {
 function getMinifiedStep(step: any) {
   if (step.steps && step.steps.length > 0) {
     return {
-      description: step.description,
-      steps: step.steps.map((s: any) => getMinifiedStep(s)),
+      [step.description]: step.steps.map((s: any) => getMinifiedStep(s)),
     }
   }
   else {
