@@ -232,10 +232,6 @@ export default defineBackground(() => {
       ...workspaceHandlers,
       ...tomationSessionHandlers,
       ...testrunHandlers,
-      'get-test-by-id': async (params: any) => {
-        const automatedTests = await TomationStorage.automatedTests.getValue() as Record<string, any>
-        return automatedTests[params.testId]
-      },
     }
     const handler = (handlers as any)[cmd]
     if (!handler)
@@ -246,6 +242,7 @@ export default defineBackground(() => {
   // --------------------------------
   console.log('Running background...')
 
+  /*
   async function extractActions(action: any) {
     if (action.steps) {
       action.steps.forEach((action: any) => extractActions(action))
@@ -254,6 +251,7 @@ export default defineBackground(() => {
     actionsById[action.id] = action
     await TomationStorage.actionsById.setValue(actionsById)
   }
+  */
 
   onMessage('popup-to-background', ({ data }) => {
     const { cmd, params } = (data as any) || {}

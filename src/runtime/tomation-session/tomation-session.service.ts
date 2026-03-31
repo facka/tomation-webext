@@ -1,4 +1,4 @@
-import { clearSession, createSession, getSessionById, getSessionByTabId, updateSession } from './tomation-session.store'
+import { clearSession, createSession, getSessionById, getSessionByTabId, getSessionsByWorkspaceId, updateSession } from './tomation-session.store'
 
 export function createTomationSession(sessionId: string, workspaceId: string, tabId: number) {
   return createSession({ sessionId, workspaceId, tabId })
@@ -27,6 +27,10 @@ export function getTomationSessionByTabId(tabId: number) {
 
 export function getTomationSessionById(sessionId: string) {
   return getSessionById(sessionId)
+}
+
+export function getTomationSessionsByWorkspaceId(workspaceId: string) {
+  return getSessionsByWorkspaceId(workspaceId)
 }
 
 export function registerTestForSession(sessionId: string, testId: string, initialAction: any) {

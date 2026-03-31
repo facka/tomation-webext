@@ -4,6 +4,7 @@ import {
   createTomationSession,
   getTomationSessionById,
   getTomationSessionByTabId,
+  getTomationSessionsByWorkspaceId,
   registerTestForSession,
   setTomationSessionConnected,
   setTomationSessionURLMismatch,
@@ -16,6 +17,7 @@ export const TomationSessionCmd = {
   ClearForTab: 'tomation-session-clear-for-tab',
   GetById: 'tomation-session-get-by-id',
   GetByTabId: 'tomation-session-get-by-tab-id',
+  GetByWorkspaceId: 'tomation-session-get-by-workspace-id',
   RegisterTest: 'tomation-register-test',
 } as const
 
@@ -50,6 +52,11 @@ export type TomationSessionMessages = {
   [TomationSessionCmd.GetByTabId]: {
     params: { tabId: number }
     result: TomationSession | null
+  }
+
+  [TomationSessionCmd.GetByWorkspaceId]: {
+    params: { workspaceId: string }
+    result: TomationSession[]
   }
 
   [TomationSessionCmd.RegisterTest]: {
@@ -87,6 +94,10 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
 
   async [TomationSessionCmd.RegisterTest](params) {
     registerTestForSession(params.sessionId, params.testId, params.initialAction)
+  },
+
+  async [TomationSessionCmd.GetByWorkspaceId](params) {
+    return getTomationSessionsByWorkspaceId(params.workspaceId)
   },
 }
 

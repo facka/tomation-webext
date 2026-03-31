@@ -32,6 +32,16 @@ export function getSessionByTabId(tabId: number): TomationSession | null {
   return null
 }
 
+export function getSessionsByWorkspaceId(workspaceId: string): TomationSession[] {
+  const sessions: TomationSession[] = []
+  for (const session of sessionById.values()) {
+    if (session.workspaceId === workspaceId) {
+      sessions.push(session)
+    }
+  }
+  return sessions
+}
+
 export function updateSession(sessionId: string, updates: Partial<TomationSession>): TomationSession {
   const session = getSessionById(sessionId)
   if (!session) {
