@@ -51,7 +51,14 @@ export function updateSession(sessionId: string, updates: Partial<TomationSessio
     ...session,
     ...updates,
   }
-  sessionById.set(sessionId, updatedSession)
+  if (sessionId !== updatedSession.id) {
+    // if sessionId is being updated, we need to delete the old entry and create a new one with the new id
+    sessionById.delete(sessionId)
+    sessionById.set(updatedSession.id, updatedSession)
+  }
+  else {
+    sessionById.set(sessionId, updatedSession)
+  }
   return updatedSession
 }
 

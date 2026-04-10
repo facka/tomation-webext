@@ -5,12 +5,17 @@ import { onMounted, ref } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
+import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
 const allWorkspaces = ref<Workspace[]>([])
 
 const selectedWorkspace = ref<Workspace | null>(null)
 const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
 const loadingSessionsForSelectedWorkspace = ref(false)
+const sessionToDelete = ref<TomationSession | null>(null)
+const closeTabWhenDeletingSession = ref(false)
+const deletingSession = ref(false)
+const deletingSessionError = ref<string | null>(null)
 
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
@@ -55,6 +60,46 @@ function testsCount(session: TomationSession): number {
 
 function goToTab(tabId: number) {
   browser.tabs.update(tabId, { active: true })
+}
+
+function openDeleteSessionDialog(session: TomationSession) {
+  sessionToDelete.value = session
+  deletingSessionError.value = null
+  closeTabWhenDeletingSession.value = false
+}
+
+function cancelDeleteSessionDialog() {
+  sessionToDelete.value = null
+  closeTabWhenDeletingSession.value = false
+}
+
+async function confirmDeleteSession() {
+  if (!sessionToDelete.value) {
+    return
+  }
+
+  deletingSession.value = true
+  deletingSessionError.value = null
+  const sessionId = sessionToDelete.value.id
+  try {
+    await sendMessage('options-to-background', {
+      cmd: TomationSessionCmd.Remove,
+      params: {
+        sessionId,
+        closeTab: closeTabWhenDeletingSession.value,
+      },
+    }, 'background')
+
+    sessionsForSelectedWorkspace.value = sessionsForSelectedWorkspace.value.filter(s => s.id !== sessionId)
+    cancelDeleteSessionDialog()
+  }
+  catch (error) {
+    console.error('Error deleting session:', error)
+    deletingSessionError.value = 'An error occurred while deleting the session. Please try again.'
+  }
+  finally {
+    deletingSession.value = false
+  }
 }
 
 function getMinifiedStep(step: any) {
@@ -155,16 +200,24 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                   :key="session.id"
                   class="rounded-md border border-slate-200 bg-slate-50 p-3"
                 >
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between gap-3">
                     <div class="text-sm font-medium text-slate-700">
                       Session {{ session.id }}
                     </div>
-                    <span
-                      class="rounded-full px-2 py-0.5 text-xs font-medium"
-                      :class="session.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'"
-                    >
-                      {{ session.connected ? 'Connected' : 'Disconnected' }}
-                    </span>
+                    <div class="flex items-center gap-3">
+                      <span
+                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                        :class="session.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'"
+                      >
+                        {{ session.connected ? 'Connected' : 'Disconnected' }}
+                      </span>
+                      <button
+                        class="text-xs text-rose-700 underline decoration-transparent underline-offset-2 transition hover:text-rose-800 hover:decoration-current"
+                        @click="openDeleteSessionDialog(session)"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   <button
                     class="mt-2 text-xs text-teal-700 underline decoration-transparent underline-offset-2 transition hover:text-teal-800 hover:decoration-current"
@@ -187,6 +240,35 @@ function getMinifiedTestsFromSession(session: TomationSession) {
             Select a workspace to view its sessions.
           </div>
         </section>
+      </div>
+    </div>
+
+    <div v-if="sessionToDelete" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4">
+      <div class="w-full max-w-md rounded-lg bg-white border border-slate-200 p-5 shadow-lg">
+        <h3 class="text-base font-semibold text-slate-800">
+          Remove Session
+        </h3>
+        <p class="mt-2 text-sm text-slate-600">
+          Are you sure you want to remove session {{ sessionToDelete.id }}?
+        </p>
+
+        <label class="mt-4 flex items-center gap-2 text-sm text-slate-700">
+          <input v-model="closeTabWhenDeletingSession" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500">
+          Also close the browser tab (ID: {{ sessionToDelete.tabId }})
+        </label>
+
+        <div v-if="deletingSessionError" class="mt-4 rounded bg-rose-50 p-3 text-sm text-rose-700">
+          {{ deletingSessionError }}
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button class="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50" :disabled="deletingSession" @click="cancelDeleteSessionDialog">
+            Cancel
+          </button>
+          <button class="px-3 py-1.5 text-sm rounded bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60" :disabled="deletingSession" @click="confirmDeleteSession">
+            {{ deletingSession ? 'Removing...' : 'Remove Session' }}
+          </button>
+        </div>
       </div>
     </div>
   </main>

@@ -1,6 +1,7 @@
 import type { TomationSession } from './tomation-session.types'
 import {
   clearTomationSession,
+  clearTomationSessionById,
   createTomationSession,
   getTomationSessionById,
   getTomationSessionByTabId,
@@ -15,6 +16,7 @@ export const TomationSessionCmd = {
   Connected: 'tomation-session-connected',
   UrlMismatch: 'tomation-url-mismatch',
   ClearForTab: 'tomation-session-clear-for-tab',
+  Remove: 'tomation-session-remove',
   GetById: 'tomation-session-get-by-id',
   GetByTabId: 'tomation-session-get-by-tab-id',
   GetByWorkspaceId: 'tomation-session-get-by-workspace-id',
@@ -41,6 +43,11 @@ export type TomationSessionMessages = {
 
   [TomationSessionCmd.ClearForTab]: {
     params: { tabId: number }
+    result: void
+  }
+
+  [TomationSessionCmd.Remove]: {
+    params: { sessionId: string, closeTab?: boolean }
     result: void
   }
 
@@ -82,6 +89,24 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
 
   async [TomationSessionCmd.ClearForTab](params) {
     clearTomationSession(params.tabId)
+  },
+
+  async [TomationSessionCmd.Remove](params) {
+    const session = getTomationSessionById(params.sessionId)
+    if (!session) {
+      return
+    }
+
+    if (params.closeTab) {
+      try {
+        await browser.tabs.remove(session.tabId)
+      }
+      catch (error) {
+        console.warn(`[tomation-webext] Failed to close tab ${session.tabId} while removing session ${session.id}`, error)
+      }
+    }
+
+    clearTomationSessionById(params.sessionId)
   },
 
   async [TomationSessionCmd.GetById](params) {
