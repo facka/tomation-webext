@@ -36,6 +36,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const activeTabId = ref<any>(null)
   const workspace = ref<Workspace | null>(null)
   const currentTabHost = ref<string>('')
+  const currentSelectedTest = ref<any>(null)
 
   initializeStore()
 
@@ -78,11 +79,17 @@ export const useAutomationStore = defineStore('automationStore', () => {
       // get test run for this tab if session exists
       if (existentSession) {
         const existentTestRun = await sendMessage('sidepanel-to-background', {
-          cmd: TestRunCmd.GetBySessionId,
-          params: { sessionId: existentSession.id },
-        }, 'background')
+          cmd: TestRunCmd.GetByTabId,
+          params: { tabId: tab.id },
+        }, 'background') as any
+        // convert json prop actionsById to map
+        if (existentTestRun && existentTestRun.actionsById) {
+          existentTestRun.actionsById = new Map(Object.entries(existentTestRun.actionsById))
+        }
+
         testRun.value = existentTestRun as unknown as TestRun
-        if (existentTestRun) {
+        console.log('Existing session found for tab. Session:', existentSession, 'Test run:', existentTestRun)
+        if (existentTestRun && existentTestRun.status === 'running') {
           goTo(VIEWS.VIEWER)
         }
       }
@@ -118,6 +125,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
       console.warn(`No session found for tabId ${tabId}. Cannot get test run.`)
       return null
     }
+    console.log(`Getting test run for session ${tomationSession.value.id} and tabId ${tabId}:`, testRun.value)
     return testRun.value
   }
 
@@ -161,6 +169,11 @@ export const useAutomationStore = defineStore('automationStore', () => {
     viewParams.value = params
   }
 
+  function openTest(testId: string) {
+    currentSelectedTest.value = tomationSession.value && tomationSession.value.automatedTests[testId] && (tomationSession.value.automatedTests[testId])
+    goTo(VIEWS.TEST, { testId })
+  }
+
   console.log('Setting up message listeners in automation store...')
 
   onMessage('background-to-popup', ({ data }: any) => {
@@ -169,14 +182,31 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
     const commands: Record<string, (params?: any) => void> = {
       'tomation-test-started': (params: any) => {
-        testRun.value = params.testRun
-        goTo(VIEWS.VIEWER)
+        const newTestRun = params.testRun
         // initialAction.value = action
         // extractActions(initialAction.value)
-        testRun.value && (testRun.value.status = 'running')
+        // testRun.value && (testRun.value.status = 'running')
+        console.log(`[tomation-webext][popup] Test started with test run:`, newTestRun)
+        if (newTestRun && newTestRun.actionsById) {
+          newTestRun.actionsById = new Map(Object.entries(newTestRun.actionsById))
+        }
+        testRun.value = newTestRun as unknown as TestRun
+        goTo(VIEWS.VIEWER)
+      },
+      'tomation-test-passed': () => {
+        testRun.value && (testRun.value.status = 'passed')
+      },
+      'tomation-test-failed': () => {
+        testRun.value && (testRun.value.status = 'failed')
+      },
+      'tomation-test-end': () => {
+        testRun.value && (testRun.value.endedAt = Date.now())
       },
       'tomation-action-update': ({ action }: any) => {
+        console.log(`[tomation-webext][popup] Received action update for action ${action.id}:`, action)
+        console.log('Current test run before update:', testRun.value)
         const existingAction = testRun.value?.actionsById.get(action.id)
+        console.log('Existing action in test run:', existingAction)
         if (!existingAction) {
           testRun.value?.actionsById.set(action.id, action)
         }
@@ -255,9 +285,11 @@ export const useAutomationStore = defineStore('automationStore', () => {
     testRun,
     workspace,
     activeTabId,
+    currentSelectedTest,
     goTo,
     setTabInfo,
     getTomationSession,
     getTestRun,
+    openTest,
   }
 })

@@ -41,11 +41,11 @@ async function runAction(action: string) {
       </div>
     </div>
     <div class="p-1 mt-1 border border-1 flex flex-row-reverse space-x-1">
-      <pre>{{ sidepanelStore.testStatus }}</pre>
+      <pre>{{ sidepanelStore.testRun?.status }}</pre>
       <button
         class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Play"
-        :disabled="sidepanelStore.testStatus === 'running'"
+        :disabled="sidepanelStore.testRun?.status === 'running'"
         @click="runAction('continue-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-play" />
@@ -53,7 +53,7 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Next"
-        :disabled="sidepanelStore.testStatus === 'running'"
+        :disabled="sidepanelStore.testRun?.status === 'running'"
         @click="runAction('next-step-request')"
       >
         <font-awesome-icon icon="fa-solid fa-forward-step" />
@@ -61,7 +61,7 @@ async function runAction(action: string) {
       <button
         class="flex-none rounded w-6 ring-1 px-1 disabled:text-gray-500 disabled:cursor-not-allowed"
         title="Pause"
-        :disabled="sidepanelStore.testStatus === 'paused'"
+        :disabled="sidepanelStore.testRun?.status === 'paused'"
         @click="runAction('pause-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-pause" />

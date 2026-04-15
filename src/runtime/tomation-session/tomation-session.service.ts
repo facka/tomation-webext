@@ -1,12 +1,11 @@
 import { clearSession, createSession, getSessionById, getSessionByTabId, getSessionsByWorkspaceId, updateSession } from './tomation-session.store'
 
-export function createTomationSession(sessionId: string, workspaceId: string, tabId: number) {
+export function createTomationSession(workspaceId: string, tabId: number) {
   const existingSession = getSessionByTabId(tabId)
   if (!existingSession) {
-    return createSession({ sessionId, workspaceId, tabId })
+    return createSession({ workspaceId, tabId })
   }
   else {
-    updateSession(existingSession.id, { workspaceId, tabId, id: sessionId })
     return existingSession
   }
 }
@@ -28,10 +27,10 @@ export function clearTomationSession(tabId: number) {
   return clearSession(session.id)
 }
 
-export function clearTomationSessionById(sessionId: string) {
-  const session = getSessionById(sessionId)
+export function clearTomationSessionByTabId(tabId: number) {
+  const session = getSessionByTabId(tabId)
   if (!session) {
-    console.warn(`No session found for sessionId ${sessionId}. Cannot clear session.`)
+    console.warn(`No session found for tabId ${tabId}. Cannot clear session.`)
     return
   }
   return clearSession(session.id)
@@ -49,13 +48,21 @@ export function getTomationSessionsByWorkspaceId(workspaceId: string) {
   return getSessionsByWorkspaceId(workspaceId)
 }
 
-export function registerTestForSession(sessionId: string, testId: string, initialAction: any) {
-  const session = getSessionById(sessionId)
+export function registerTestForSessionByTabId(tabId: number, testId: string, initialAction: any) {
+  const session = getSessionByTabId(tabId)
   if (!session) {
-    throw new Error(`Session with id ${sessionId} not found`)
+    throw new Error(`Session for tabId ${tabId} not found`)
   }
   session.automatedTests[testId] = {
     initialAction,
   }
-  updateSession(sessionId, { automatedTests: session.automatedTests })
+  updateSession(session.id, { automatedTests: session.automatedTests })
+}
+
+export function getTestById(testId: string, tabId: number) {
+  const session = getSessionByTabId(tabId)
+  if (session && session.automatedTests[testId]) {
+    return session.automatedTests[testId]
+  }
+  return null
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMounted, ref } from 'vue'
-import ActionViewer from '@/components/ActionViewer.vue'
 import AutomatedTests from '@/components/AutomatedTests.vue'
 import History from '@/components/History.vue'
 import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
+import Test from '@/components/Test.vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
 import { VIEWS } from '~/logic/views'
@@ -68,8 +68,13 @@ function reloadPage() {
   <!-- Main Content -->
   <main v-if="!loading" class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
     <div v-if="sidepanelStore.getTomationSession()?.connected ">
+      <div v-if="sidepanelStore.testRun">
+        Test is running: {{ sidepanelStore.testRun?.initialAction.description }}
+        Status: {{ sidepanelStore.testRun?.status }}
+        <div>ActionsById: {{ sidepanelStore.testRun?.actionsById?.keys.length }}</div>
+      </div>
       <div v-if="sidepanelStore.view === 'VIEWER'">
-        <TaskExecutionViewer :action="sidepanelStore.getTestRun(sidepanelStore.getTomationSession()?.tabId)?.initialAction" @@close="closeTaskExecutionViewer" />
+        <TaskExecutionViewer :action="sidepanelStore.testRun?.initialAction" @@close="closeTaskExecutionViewer" />
       </div>
       <div v-else-if="sidepanelStore.view === 'MAIN'">
         <UrlStatus :url="workspace?.script" class="mb-2" />
@@ -77,24 +82,7 @@ function reloadPage() {
         <History class="mt-2" />
       </div>
       <div v-else-if="sidepanelStore.view === 'TEST'">
-        <div class="flex">
-          <div class="w-11/12 font-bold">
-            <div>Test inspector</div>
-          </div>
-          <div class="grow flex flex-row-reverse">
-            <button class="flex-none rounded w-6 ring-1 px-1" title="Close" @click="goTo(VIEWS.MAIN)">
-              <font-awesome-icon icon="fa-solid fa-times" />
-            </button>
-          </div>
-        </div>
-        <div>
-          <h3 class="font-bold mt-2">
-            {{ (sidepanelStore.viewParams as any)?.action.description }}
-          </h3>
-          <div v-for="(step, index) in (sidepanelStore.viewParams as any)?.action.steps" :key="index">
-            <ActionViewer :action="step" />
-          </div>
-        </div>
+        <Test />
       </div>
     </div>
     <div v-else>

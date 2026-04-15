@@ -11,7 +11,6 @@ const sidepanelStore = useAutomationStore()
 const expandableElem = ref()
 
 watch(props.action, (newAction) => {
-  console.log('ActionViewer: action updated: ', newAction)
   // scroll to the action div
   const actionDiv = document.getElementById(`action-${newAction.id}`)
   if (actionDiv) {
@@ -21,10 +20,26 @@ watch(props.action, (newAction) => {
 
 const action = computed(() => props.action || {})
 
+// build actionsById map for the current selected test run initial action and its steps
+const actionsById = computed(() => {
+  const map = new Map<string, any>()
+  const queue = sidepanelStore.testRun ? [sidepanelStore.testRun?.initialAction] : []
+  while (queue.length > 0) {
+    const action = queue.shift()
+    if (action) {
+      map.set(action.id, action)
+      if (action.steps) {
+        queue.push(...action.steps)
+      }
+    }
+  }
+  return map
+})
+
 const allStepsSuccessful = computed(() => {
   if (action.value.type === 'Action' && Array.isArray(action.value.steps)) {
     return action.value.steps.every((step: any) => {
-      const stepStatus = sidepanelStore.getActionById(step.id)?.status
+      const stepStatus = actionsById.value.get(step.id)?.status
       return stepStatus === ACTION_STATUS.SUCCESS
     })
   }
@@ -42,16 +57,16 @@ watch(allStepsSuccessful, (successful) => {
 })
 
 const status = computed(() => {
-  return (sidepanelStore.getActionById(action.value.id)?.status) || ACTION_STATUS.WAITING
+  return (actionsById.value.get(action.value.id)?.status) || ACTION_STATUS.WAITING
 })
 const error = computed(() => {
-  return (sidepanelStore.getActionById(action.value.id)?.error) || ''
+  return (actionsById.value.get(action.value.id)?.error) || ''
 })
 const context = computed(() => {
-  return (sidepanelStore.getActionById(action.value.id)?.context) || {}
+  return (actionsById.value.get(action.value.id)?.context) || {}
 })
 const tries = computed(() => {
-  return (sidepanelStore.getActionById(action.value.id)?.tries) || 0
+  return (actionsById.value.get(action.value.id)?.tries) || 0
 })
 
 async function displayHTML() {

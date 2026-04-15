@@ -43,6 +43,13 @@ async function init() {
   }) as Workspace
   console.log(`[tomation-webext] Script: `, workspace?.script)
 
+  console.log('Tomation script injected: ', window.__TOMATION_SCRIPT_INJECTED__)
+
+  if (window.__TOMATION_SCRIPT_INJECTED__ === true) {
+    console.info('[tomation-webext] Script already injected, skipping injection')
+    return
+  }
+
   window.addEventListener('message', (event: any) => {
     // console.log('[tomation-webext] window message event', event)
     // console.log('[tomation-webext] Sender: ', event.data.sender)
@@ -65,6 +72,7 @@ async function init() {
     try {
       console.info(`[tomation-webext] Injecting script for host ${workspace.host} from URL: ${workspace.script}`)
       injectFromURL(workspace.script)
+      window.__TOMATION_SCRIPT_INJECTED__ = true
     }
     catch (err) {
       console.error('[tomation-webext] Failed to read scriptURL from workspace', err)

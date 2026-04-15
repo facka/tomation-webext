@@ -1,7 +1,7 @@
 import type { TestRun } from './testrun.types'
 
 export function createTestRun(input: {
-  sessionId: string
+  tabId: number
   testId: string
   initialAction: any
 }): TestRun {
@@ -18,9 +18,9 @@ export function createTestRun(input: {
 
   extractActions(input.initialAction)
 
-  return {
-    id: `${input.sessionId}-${input.testId}-${now}`,
-    sessionId: input.sessionId,
+  const testRun: TestRun = {
+    id: `${input.tabId}-${input.testId}-${now}`,
+    tabId: input.tabId,
     testId: input.testId,
     status: 'running',
     startedAt: Date.now(),
@@ -29,6 +29,8 @@ export function createTestRun(input: {
     actionsById,
     logs: [],
   }
+  console.log('Created test run:', testRun)
+  return testRun
 }
 
 export function startTestRun(testRun: TestRun): TestRun {
@@ -47,7 +49,10 @@ export function endTestRun(testRun: TestRun, status: 'passed' | 'failed' | 'canc
   }
 }
 
-export function testRunToJSON(testRun: TestRun): any {
+export function testRunToJSON(testRun: TestRun | null): any {
+  if (!testRun) {
+    return null
+  }
   return {
     ...testRun,
     actionsById: Object.fromEntries(testRun.actionsById),

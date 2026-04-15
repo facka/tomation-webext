@@ -1,12 +1,12 @@
 import type { TomationSession } from './tomation-session.types'
 import {
   clearTomationSession,
-  clearTomationSessionById,
+  clearTomationSessionByTabId,
   createTomationSession,
-  getTomationSessionById,
+  getTestById,
   getTomationSessionByTabId,
   getTomationSessionsByWorkspaceId,
-  registerTestForSession,
+  registerTestForSessionByTabId,
   setTomationSessionConnected,
   setTomationSessionURLMismatch,
 } from './tomation-session.service'
@@ -17,17 +17,17 @@ export const TomationSessionCmd = {
   UrlMismatch: 'tomation-url-mismatch',
   ClearForTab: 'tomation-session-clear-for-tab',
   Remove: 'tomation-session-remove',
-  GetById: 'tomation-session-get-by-id',
   GetByTabId: 'tomation-session-get-by-tab-id',
   GetByWorkspaceId: 'tomation-session-get-by-workspace-id',
   RegisterTest: 'tomation-register-test',
+  GetTestById: 'tomation-session-get-test-by-id',
 } as const
 
 export type TomationSessionCmdType = (typeof TomationSessionCmd)[keyof typeof TomationSessionCmd]
 
 export type TomationSessionMessages = {
   [TomationSessionCmd.Init]: {
-    params: { sessionId: string, workspaceId: string, tabId: number }
+    params: { workspaceId: string, tabId: number }
     result: TomationSession
   }
 
@@ -47,13 +47,8 @@ export type TomationSessionMessages = {
   }
 
   [TomationSessionCmd.Remove]: {
-    params: { sessionId: string, closeTab?: boolean }
+    params: { tabId: number, closeTab?: boolean }
     result: void
-  }
-
-  [TomationSessionCmd.GetById]: {
-    params: { sessionId: string }
-    result: TomationSession | null
   }
 
   [TomationSessionCmd.GetByTabId]: {
@@ -67,8 +62,13 @@ export type TomationSessionMessages = {
   }
 
   [TomationSessionCmd.RegisterTest]: {
-    params: { sessionId: string, testId: string, initialAction: any }
+    params: { tabId: number, testId: string, initialAction: any }
     result: void
+  }
+
+  [TomationSessionCmd.GetTestById]: {
+    params: { testId: string, tabId: number }
+    result: TomationSession | null
   }
 }
 
@@ -76,7 +76,7 @@ type Handler<K extends TomationSessionCmdType> = (params: TomationSessionMessage
 
 const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   async [TomationSessionCmd.Init](params) {
-    return createTomationSession(params.sessionId, params.workspaceId, params.tabId)
+    return createTomationSession(params.workspaceId, params.tabId)
   },
 
   async [TomationSessionCmd.Connected](params) {
@@ -92,7 +92,7 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   },
 
   async [TomationSessionCmd.Remove](params) {
-    const session = getTomationSessionById(params.sessionId)
+    const session = getTomationSessionByTabId(params.tabId)
     if (!session) {
       return
     }
@@ -106,11 +106,7 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
       }
     }
 
-    clearTomationSessionById(params.sessionId)
-  },
-
-  async [TomationSessionCmd.GetById](params) {
-    return getTomationSessionById(params.sessionId)
+    clearTomationSessionByTabId(params.tabId)
   },
 
   async [TomationSessionCmd.GetByTabId](params) {
@@ -118,11 +114,15 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   },
 
   async [TomationSessionCmd.RegisterTest](params) {
-    registerTestForSession(params.sessionId, params.testId, params.initialAction)
+    registerTestForSessionByTabId(params.tabId, params.testId, params.initialAction)
   },
 
   async [TomationSessionCmd.GetByWorkspaceId](params) {
     return getTomationSessionsByWorkspaceId(params.workspaceId)
+  },
+
+  async [TomationSessionCmd.GetTestById](params) {
+    return getTestById(params.testId, params.tabId)
   },
 }
 

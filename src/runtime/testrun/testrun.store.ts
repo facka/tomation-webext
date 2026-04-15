@@ -3,11 +3,17 @@ import type { TestRun } from './testrun.types'
 export type TestRunStore = {
   getAll: () => TestRun[]
   getById: (id: string) => TestRun | null
-  getBySessionId: (sessionId: string) => TestRun
+  getByTabId: (tabId: number) => TestRun | null
   save: (testRun: TestRun) => TestRun
   delete: (id: string) => void
   clear: () => void
-  updateAction: (testRunId: string, action: any) => TestRun
+  updateAction: (tabId: number, action: any) => TestRun | null
+  stopTestRun: (tabId: number) => TestRun | null
+  markTestPassed: (tabId: number) => TestRun | null
+  markTestFailed: (tabId: number) => TestRun | null
+  endTestRun: (tabId: number) => TestRun | null
+  pauseTestRun: (tabId: number) => TestRun | null
+  playTestRun: (tabId: number) => TestRun | null
 }
 
 export type Action = {
@@ -31,10 +37,10 @@ export class InMemoryTestRunStore implements TestRunStore {
     return this.testRunsById.get(id) ?? null
   }
 
-  getBySessionId(sessionId: string): TestRun {
-    const testRun = this.getAll().find(testRun => testRun.sessionId === sessionId)
+  getByTabId(tabId: number): TestRun | null {
+    const testRun = this.getAll().find(testRun => testRun.tabId === tabId)
     if (!testRun) {
-      throw new Error('Test run not found')
+      return null
     }
 
     return testRun
@@ -53,8 +59,12 @@ export class InMemoryTestRunStore implements TestRunStore {
     this.testRunsById.clear()
   }
 
-  updateAction(sessionId: string, action: Action): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  updateAction(tabId: number, action: Action): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+
+    if (!testRun) {
+      return null
+    }
 
     const existingAction = testRun.actionsById.get(action.id)
     if (!existingAction) {
@@ -68,40 +78,57 @@ export class InMemoryTestRunStore implements TestRunStore {
     return testRun
   }
 
-  stopTestRun(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  stopTestRun(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.status = 'cancelled'
     testRun.endedAt = Date.now()
     return testRun
   }
 
-  markTestPassed(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  markTestPassed(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.status = 'passed'
     return testRun
   }
 
-  markTestFailed(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  markTestFailed(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.status = 'failed'
     return testRun
   }
 
-  endTestRun(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
-    testRun.status = 'idle'
+  endTestRun(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.endedAt = Date.now()
     return testRun
   }
 
-  pauseTestRun(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  pauseTestRun(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.status = 'paused'
     return testRun
   }
 
-  playTestRun(sessionId: string): TestRun {
-    const testRun = this.getBySessionId(sessionId)
+  playTestRun(tabId: number): TestRun | null {
+    const testRun = this.getByTabId(tabId)
+    if (!testRun) {
+      return null
+    }
     testRun.status = 'running'
     return testRun
   }

@@ -11,55 +11,55 @@ export const TestRunCmd = {
   TestEnd: 'test-end',
   TestPause: 'test-pause',
   TestPlay: 'test-play',
-  GetBySessionId: 'get-by-session-id',
+  GetByTabId: 'get-by-tab-id',
 } as const
 
 export type TestRunCmdType = (typeof TestRunCmd)[keyof typeof TestRunCmd]
 
 export type TestRunMessages = {
   [TestRunCmd.TestStarted]: {
-    params: { sessionId: string, testId: string, action: any }
-    result: TestRun
+    params: { tabId: number, testId: string, action: any }
+    result: TestRun | null
   }
 
   [TestRunCmd.ActionUpdate]: {
-    params: { action: any, sessionId: string }
-    result: TestRun
+    params: { action: any, tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestStop]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestPassed]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestFailed]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestEnd]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestPause]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
   [TestRunCmd.TestPlay]: {
-    params: { sessionId: string }
-    result: TestRun
+    params: { tabId: number }
+    result: TestRun | null
   }
 
-  [TestRunCmd.GetBySessionId]: {
-    params: { sessionId: string }
-    result: TestRun
+  [TestRunCmd.GetByTabId]: {
+    params: { tabId: number }
+    result: TestRun | null
   }
 }
 
@@ -67,58 +67,60 @@ type Handler<K extends TestRunCmdType> = (params: TestRunMessages[K]['params']) 
 
 const handlers: { [K in TestRunCmdType]: Handler<K> } = {
   async [TestRunCmd.TestStarted](params) {
-    const { sessionId, testId, action } = params
+    const { tabId, testId, action } = params
 
     browser.action.setBadgeText({ text: 'ON' })
     browser.action.setBadgeBackgroundColor({ color: '#33BB33' })
 
-    return createTestRun({
-      sessionId,
+    const testRun = createTestRun({
+      tabId,
       testId,
       initialAction: action,
     })
+    testrunStore.save(testRun)
+    return testRun
   },
 
   async [TestRunCmd.ActionUpdate](params) {
-    const { sessionId, action } = params
+    const { tabId, action } = params
 
-    return testrunStore.updateAction(sessionId, action)
+    return testrunStore.updateAction(tabId, action)
   },
 
   async [TestRunCmd.TestStop](params) {
-    const { sessionId } = params
+    const { tabId } = params
     browser.action.setBadgeText({ text: '' })
-    return testrunStore.stopTestRun(sessionId)
+    return testrunStore.stopTestRun(tabId)
   },
 
   async [TestRunCmd.TestPassed](params) {
-    const { sessionId } = params
-    return testrunStore.markTestPassed(sessionId)
+    const { tabId } = params
+    return testrunStore.markTestPassed(tabId)
   },
 
   async [TestRunCmd.TestFailed](params) {
-    const { sessionId } = params
-    return testrunStore.markTestFailed(sessionId)
+    const { tabId } = params
+    return testrunStore.markTestFailed(tabId)
   },
 
   async [TestRunCmd.TestEnd](params) {
-    const { sessionId } = params
-    return testrunStore.endTestRun(sessionId)
+    const { tabId } = params
+    return testrunStore.endTestRun(tabId)
   },
 
   async [TestRunCmd.TestPause](params) {
-    const { sessionId } = params
-    return testrunStore.pauseTestRun(sessionId)
+    const { tabId } = params
+    return testrunStore.pauseTestRun(tabId)
   },
 
   async [TestRunCmd.TestPlay](params) {
-    const { sessionId } = params
-    return testrunStore.playTestRun(sessionId)
+    const { tabId } = params
+    return testrunStore.playTestRun(tabId)
   },
 
-  async [TestRunCmd.GetBySessionId](params) {
-    const { sessionId } = params
-    return testrunStore.getBySessionId(sessionId)
+  async [TestRunCmd.GetByTabId](params) {
+    const { tabId } = params
+    return testrunStore.getByTabId(tabId)
   },
 }
 

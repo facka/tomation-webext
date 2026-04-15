@@ -1,3 +1,4 @@
+import { get } from '@vueuse/core'
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
 import { TestRunCmd, testrunHandlers } from '@/runtime/testrun/testrun.handlers'
@@ -6,13 +7,13 @@ import { tomationSessionHandlers } from '@/runtime/tomation-session/tomation-ses
 import {
   clearTomationSession,
   createTomationSession,
-  registerTestForSession,
+  getTomationSessionByTabId,
+  registerTestForSessionByTabId,
   setTomationSessionConnected,
   setTomationSessionURLMismatch,
 } from '@/runtime/tomation-session/tomation-session.service'
 import { useActiveTab } from '~/composables/useActiveTab'
 // import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
-import TomationStorage from '~/logic/storage'
 import { VIEWS } from '~/logic/views'
 
 export default defineBackground(() => {
@@ -86,14 +87,13 @@ export default defineBackground(() => {
       },
       'tomation-session-init': async (params: any) => {
         console.log('[tomation-webext][background] Session init received from content script:', params)
-        const { sessionId } = params
         const tab = await browser.tabs.get(tabId!)
 
         const host = new URL(tab?.url ?? '').host
         const workspace = await workspaceHandlers[WorkspaceCmd.GetForHost]({ host: host ?? '' })
 
         if (tab && workspace) {
-          const tomationSession = createTomationSession(sessionId, workspace.id, tab.id as number)
+          const tomationSession = createTomationSession(workspace.id, tab.id as number)
           console.log(`[tomation-webext][background] Created session with id ${tomationSession.id} for workspace ${workspace.name} in tab ${tab.id}`)
           sendMessage('background-to-popup', { cmd: 'tomation-session-created', params: tomationSession }, 'popup')
         }
@@ -103,56 +103,71 @@ export default defineBackground(() => {
       },
       'tomation-session-connected': async (params: any) => {
         console.log('[tomation-webext][background] Session connected received from content script:', params)
-        const { sessionId } = params
-        setTomationSessionConnected(sessionId)
-        sendMessage('background-to-popup', { cmd: 'tomation-session-connected', params }, 'popup')
+        const session = getTomationSessionByTabId(tabId!)
+        if (!session) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} while trying to set session as connected`)
+          return
+        }
+        setTomationSessionConnected(session.id)
+        sendMessage('background-to-popup', { cmd: 'tomation-session-connected', params: { sessionId: session.id } }, 'popup')
       },
       'tomation-test-started': async (params: any) => {
-        const { sessionId, testId, action } = params
+        const { testId, action } = params
         const testRun = await testrunHandlers[TestRunCmd.TestStarted]({
-          sessionId,
+          tabId,
           testId,
           action,
         })
-        await TomationStorage.view.setValue(VIEWS.VIEWER)
         sendMessage('background-to-popup', { cmd: 'tomation-test-started', params: { testRun: testRunToJSON(testRun) } }, 'popup')
       },
       'tomation-action-update': async (params: any) => {
         console.log('[tomation-webext][background] action-update received in background:', params)
         await testrunHandlers[TestRunCmd.ActionUpdate]({
-          sessionId: params.sessionId,
+          tabId,
           action: params.action,
         })
-        sendMessage('background-to-popup', { cmd: 'tomation-action-update', params }, 'popup')
+        try {
+          sendMessage('background-to-popup', { cmd: 'tomation-action-update', params }, 'popup')
+        }
+        catch (err) {
+          console.error('[tomation-webext][background] Failed to send action-update message to popup', err)
+        }
       },
       'tomation-test-stop': async () => {
         console.log('[tomation-webext][background] Test stopped')
         await testrunHandlers[TestRunCmd.TestStop]({
-          sessionId: params.sessionId,
+          tabId,
         })
-        await TomationStorage.view.setValue(VIEWS.MAIN)
+        // await TomationStorage.view.setValue(VIEWS.MAIN)
       },
       'tomation-save-value': async (params: any) => {
         console.log('[tomation-webext][background] save-value', params)
-        const memory = await TomationStorage.memory.getValue()
+        /* const memory = await TomationStorage.memory.getValue()
         memory[params.memorySlotName] = params.value
         await TomationStorage.memory.setValue(memory)
+        */
       },
       'tomation-read-memory': async (params: any) => {
         console.log('[tomation-webext][background] read-memory', params)
-        const activeTab = (await useActiveTab().getActiveTab()).destination
-        const memory = await TomationStorage.memory.getValue()
-        sendMessage('read-memory-response', memory[params.memorySlotName], activeTab)
+        // const activeTab = (await useActiveTab().getActiveTab()).destination
+        // const memory = await TomationStorage.memory.getValue()
+        // sendMessage('read-memory-response', memory[params.memorySlotName], activeTab)
       },
       'tomation-register-test': async (params: any) => {
         console.log('[tomation-webext][background] register-test', params)
-        const { sessionId, id, action } = params
-        if (!sessionId || !id || !action) {
+        const { id, action } = params
+        if (!id || !action) {
           console.warn('[tomation-webext][background] Missing parameters for register-test command', params)
           throw new Error(`Missing parameters for register-test command. Params = ${JSON.stringify(params)} `)
         }
+        // get test run and avoid registering test if test run is running
+        const testRun = await testrunHandlers[TestRunCmd.GetByTabId]({ tabId })
+        if (testRun && testRun.status === 'running') {
+          console.warn('[tomation-webext][background] Test run is already running. Cannot register new test.', params)
+          return
+        }
         try {
-          registerTestForSession(sessionId, id, action)
+          registerTestForSessionByTabId(tabId, id, action)
           sendMessage('background-to-popup', { cmd: 'tomation-register-test', params }, 'popup')
         }
         catch (err) {
@@ -162,38 +177,42 @@ export default defineBackground(() => {
       },
       'tomation-test-passed': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestPassed]({
-          sessionId: params.sessionId,
+          tabId,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-passed', params }, 'popup')
       },
       'tomation-test-failed': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestFailed]({
-          sessionId: params.sessionId,
+          tabId,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-failed', params }, 'popup')
       },
       'tomation-test-end': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestEnd]({
-          sessionId: params.sessionId,
+          tabId,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-end', params }, 'popup')
       },
       'tomation-test-pause': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestPause]({
-          sessionId: params.sessionId,
+          tabId,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-pause', params }, 'popup')
       },
       'tomation-test-play': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestPlay]({
-          sessionId: params.sessionId,
+          tabId,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-play', params }, 'popup')
       },
       'tomation-url-mismatch': (params: any) => {
         console.warn(`[tomation-webext][background] URL mismatch detected in content script. Message = `, params)
-        const { sessionId } = params
-        setTomationSessionURLMismatch(sessionId)
+        const session = getTomationSessionByTabId(tabId!)
+        if (!session) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} while trying to set session as connected`)
+          return
+        }
+        setTomationSessionURLMismatch(session.id)
         sendMessage('background-to-popup', { cmd: 'tomation-url-mismatch', params }, 'popup')
       },
     }
@@ -260,7 +279,7 @@ export default defineBackground(() => {
     const commands: Record<string, (params?: any) => void> = {
       'close-run-view': async () => {
         console.log('Task viewer closed (popup request)!')
-        await TomationStorage.view.setValue(VIEWS.MAIN)
+        // await TomationStorage.view.setValue(VIEWS.MAIN)
       },
     }
 

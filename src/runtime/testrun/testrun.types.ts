@@ -1,6 +1,6 @@
 export type TestRun = {
   id: string
-  sessionId: string
+  tabId: number
   testId: string
   status: 'idle' | 'running' | 'passed' | 'failed' | 'cancelled' | 'paused'
   startedAt: number

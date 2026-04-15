@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { VIEWS } from '~/logic/views'
 import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '@/components/design-system/Expandable.vue'
-import { VIEWS } from '~/logic/views'
 
 const props = defineProps<{
   node: TreeNode
@@ -36,23 +36,9 @@ async function runTest(testId: string) {
   }, activeTab)
 }
 
-function goTo(view: VIEWS, viewParams: any = {}) {
-  sidepanelStore.goTo(view, viewParams)
-}
-
 async function openTest() {
   console.log('Opening test with id:', testId.value)
-  const test: any = await sendMessage('sidepanel-to-background', {
-    cmd: 'get-test-by-id',
-    params: {
-      testId: testId.value,
-    },
-  }, 'background')
-
-  console.log('Open Test: ', test)
-  if (test?.action) {
-    goTo(VIEWS.TEST, { action: test?.action })
-  }
+  sidepanelStore.openTest(testId.value)
 }
 </script>
 

@@ -1,21 +1,29 @@
 <script setup lang="ts">
 import type { Workspace } from '@/logic/workspace/workspace.types'
+import type { TestRun } from '@/runtime/testrun/testrun.types'
 import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
 import { onMounted, ref } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
+import { TestRunCmd } from '@/runtime/testrun/testrun.handlers'
+import { testRunFromJSON } from '@/runtime/testrun/testrun.model'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
+
+type WorkspaceSession = TomationSession & {
+  testRun: TestRun | null
+}
 
 const allWorkspaces = ref<Workspace[]>([])
 
 const selectedWorkspace = ref<Workspace | null>(null)
-const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
+const sessionsForSelectedWorkspace = ref<WorkspaceSession[]>([])
 const loadingSessionsForSelectedWorkspace = ref(false)
 const sessionToDelete = ref<TomationSession | null>(null)
 const closeTabWhenDeletingSession = ref(false)
 const deletingSession = ref(false)
 const deletingSessionError = ref<string | null>(null)
+let selectedWorkspaceLoadId = 0
 
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
@@ -29,12 +37,33 @@ onMounted(async () => {
 })
 
 async function selectWorkspace(workspace: Workspace) {
+  const loadId = ++selectedWorkspaceLoadId
   selectedWorkspace.value = workspace
   loadingSessionsForSelectedWorkspace.value = true
-  sessionsForSelectedWorkspace.value = await sendMessage('options-to-background', {
-    cmd: 'tomation-session-get-by-workspace-id',
+  const sessions = await sendMessage('options-to-background', {
+    cmd: TomationSessionCmd.GetByWorkspaceId,
     params: { workspaceId: workspace.id },
-  }, 'background')
+  }, 'background') as TomationSession[]
+
+  const sessionsWithTestRuns = await Promise.all(
+    sessions.map(async (session) => {
+      const serializedTestRun = await sendMessage('options-to-background', {
+        cmd: TestRunCmd.GetByTabId,
+        params: { tabId: session.tabId },
+      }, 'background')
+
+      return {
+        ...session,
+        testRun: serializedTestRun ? testRunFromJSON(serializedTestRun) : null,
+      }
+    }),
+  )
+
+  if (loadId !== selectedWorkspaceLoadId) {
+    return
+  }
+
+  sessionsForSelectedWorkspace.value = sessionsWithTestRuns
   loadingSessionsForSelectedWorkspace.value = false
 }
 
@@ -56,6 +85,18 @@ async function deleteWorkspace(id: string) {
 
 function testsCount(session: TomationSession): number {
   return Object.keys(session.automatedTests ?? {}).length
+}
+
+function actionsCount(testRun: TestRun | null): number {
+  return testRun?.actionsById.size ?? 0
+}
+
+function formatTimestamp(timestamp: number): string {
+  if (!timestamp) {
+    return 'N/A'
+  }
+
+  return new Date(timestamp).toLocaleString()
 }
 
 function goToTab(tabId: number) {
@@ -81,11 +122,12 @@ async function confirmDeleteSession() {
   deletingSession.value = true
   deletingSessionError.value = null
   const sessionId = sessionToDelete.value.id
+  const sessionTabId = sessionToDelete.value.tabId
   try {
     await sendMessage('options-to-background', {
       cmd: TomationSessionCmd.Remove,
       params: {
-        sessionId,
+        tabId: sessionTabId,
         closeTab: closeTabWhenDeletingSession.value,
       },
     }, 'background')
@@ -230,6 +272,34 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                       Automated Tests ({{ testsCount(session) }}):
                     </div>
                     <pre class="mt-2 max-h-40 overflow-auto rounded bg-slate-100 p-2 text-xs text-slate-700">{{ JSON.stringify(getMinifiedTestsFromSession(session), null, 2) }}</pre>
+                  </div>
+                  <div class="mt-3 rounded-md border border-slate-200 bg-white p-3">
+                    <div class="text-xs font-semibold text-slate-600">
+                      Test Run
+                    </div>
+                    <div v-if="session.testRun" class="mt-2 space-y-1 text-xs text-slate-700">
+                      <div>
+                        Status: <span class="font-medium text-slate-900">{{ session.testRun.status }}</span>
+                      </div>
+                      <div>
+                        Test ID: {{ session.testRun.testId }}
+                      </div>
+                      <div>
+                        Initial Action: {{ session.testRun.initialAction?.description ?? 'N/A' }}
+                      </div>
+                      <div>
+                        Actions: {{ actionsCount(session.testRun) }}
+                      </div>
+                      <div>
+                        Started: {{ formatTimestamp(session.testRun.startedAt) }}
+                      </div>
+                      <div>
+                        Ended: {{ formatTimestamp(session.testRun.endedAt) }}
+                      </div>
+                    </div>
+                    <div v-else class="mt-2 text-xs text-slate-500">
+                      No test run found for this session.
+                    </div>
                   </div>
                 </li>
               </ul>
