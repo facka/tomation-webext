@@ -64,11 +64,6 @@ function reloadPage() {
   <!-- Main Content -->
   <main v-if="!loading" class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
     <div v-if="sidepanelStore.getTomationSession()?.connected ">
-      <div v-if="sidepanelStore.testRun">
-        Test is running: {{ sidepanelStore.testRun?.initialAction.description }}
-        Status: {{ sidepanelStore.testRun?.status }}
-        <div>ActionsById: {{ sidepanelStore.testRun?.actionsById?.keys.length }}</div>
-      </div>
       <div v-if="sidepanelStore.view === 'VIEWER'">
         <TaskExecutionViewer :action="sidepanelStore.testRun?.initialAction" @@close="closeTaskExecutionViewer" />
       </div>
