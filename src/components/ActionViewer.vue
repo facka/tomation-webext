@@ -168,14 +168,14 @@ async function retryAction() {
 
 <template>
   <div :id="`action-${action.id}`" />
-  <div v-if="action?.type === 'Action'" class="mt-2 text-left">
+  <div v-if="action?.type === 'Action'" class="text-left">
     <Expandable ref="expandableElem" expanded>
       <template #header>
-        <div class="flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2 shadow-sm">
           <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
             <font-awesome-icon :icon="getStatusIcon(status)" />
           </div>
-          <span class="grow leading-5" :class="getStatusTextClass(status)">
+          <span class="grow flex items-center" :class="getStatusTextClass(status)">
             <span class="font-medium">{{ action.description }}</span>
             <span
               v-if="action.params && Object.keys(action.params).length"
@@ -230,14 +230,14 @@ async function retryAction() {
   </div>
   -->
   <div v-else>
-    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-      <div class="flex items-start gap-2">
+    <div class="rounded-lg border border-slate-200 bg-white px-2 py-2 shadow-sm">
+      <div class="flex items-center gap-2">
         <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
           <font-awesome-icon :icon="getStatusIcon(status)" />
         </div>
         <div class="grow min-w-0">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm font-medium leading-5" :class="getStatusTextClass(status)">{{ action.description }}</span>
+            <span class="text-xs font-medium leading-5" :class="getStatusTextClass(status)">{{ action.description }}</span>
             <span v-if="tries && tries >= 1" class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Tries {{ tries }}/10</span>
           </div>
           <div v-if="error" class="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-sm text-rose-700">
@@ -247,7 +247,7 @@ async function retryAction() {
         <div v-if="status === ACTION_STATUS.SUCCESS || status === ACTION_STATUS.ERROR" class="flex-none self-start">
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-cyan-700 transition hover:border-cyan-200 hover:bg-cyan-50"
+            class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-cyan-700 transition hover:border-cyan-200 hover:bg-cyan-50"
             title="Display HTML"
             @click="displayHTML()"
           >

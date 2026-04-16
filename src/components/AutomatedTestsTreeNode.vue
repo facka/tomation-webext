@@ -52,7 +52,6 @@ async function openTest() {
         <div
           v-for="(childNode, index) in node.children"
           :key="index"
-          :class="{ 'pb-2': index === (node.children.length - 1) }"
         >
           <AutomatedTestsTreeNode :node="childNode" />
         </div>
@@ -60,7 +59,7 @@ async function openTest() {
     </Expandable>
   </div>
   <div v-else>
-    <div class="flex border-b-2 border-gray-200">
+    <div class="flex">
       <div class="grow py-1">
         <span
           class="cursor-pointer text-cyan-600"

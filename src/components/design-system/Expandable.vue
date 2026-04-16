@@ -41,18 +41,18 @@ defineExpose({
 
 <template>
   <div class="border-gray-200 rounded-md" :class="{ 'blur-sm': loading }">
-    <div class="flex h-auto">
-      <div class="grow mr-2">
+    <div class="flex h-auto items-center justify-between">
+      <div class="grow">
         <slot v-if="!loading" :class="{ 'pl-2': isExpanded }" name="header" />
       </div>
-      <div class="flex-none w-3 grid justify-items-end cursor-pointer" @click="toggleExpandedState">
+      <div class="absolute right-1 w-6 h-6 grid place-items-center cursor-pointer rounded-md" @click="toggleExpandedState">
         <span>
           <font-awesome-icon v-show="!isExpanded" icon="fa-solid fa-angle-down" />
           <font-awesome-icon v-show="isExpanded" icon="fa-solid fa-angle-up" />
         </span>
       </div>
     </div>
-    <div v-if="!loading && isExpanded" class="mt-2 pt-1 border-gray-200 mt-0 pl-2">
+    <div v-if="!loading && isExpanded" class="mt-2 border-gray-200 pl-2">
       <slot />
     </div>
   </div>

@@ -69,8 +69,7 @@ function reloadPage() {
       </div>
       <div v-else-if="sidepanelStore.view === 'MAIN'">
         <UrlStatus :url="workspace?.script" class="mb-2" />
-        <AutomatedTests :tests="sidepanelStore.getTomationSession()?.automatedTests" class="mt-2" />
-        <History class="mt-2" />
+        <AutomatedTests :tests="sidepanelStore.getTomationSession()?.automatedTests" />
       </div>
       <div v-else-if="sidepanelStore.view === 'TEST'">
         <Test />

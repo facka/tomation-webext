@@ -90,7 +90,7 @@ function openTest(testId: string) {
 </script>
 
 <template>
-  <section class="space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+  <section>
     <div v-if="testsList.length === 0" class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500">
       No automated tests found for this workspace.
       <br>
@@ -121,20 +121,19 @@ function openTest(testId: string) {
         </div>
       </div>
 
-      <input
-        v-model="query"
-        name="query"
-        class="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100"
-        label="query"
-        placeholder="Search tests..."
-      >
-
-      <div class="flex items-center">
-        <span class="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">Showing {{ filteredPaths.length }} of {{ testsList.length }}</span>
+      <div class="relative">
+        <input
+          v-model="query"
+          name="query"
+          class="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 pr-28 text-sm text-slate-700 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100"
+          label="query"
+          placeholder="Search tests..."
+        >
+        <span class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">{{ filteredPaths.length }}/{{ testsList.length }}</span>
       </div>
     </div>
 
-    <div v-if="visualizationMode === 'tree' && filteredPaths.length" class="rounded-lg border border-slate-200 bg-slate-50 p-2">
+    <div v-if="visualizationMode === 'tree' && filteredPaths.length" class="mt-2">
       <div
         v-for="(node, index) in testsTree.children"
         :key="index"
@@ -144,11 +143,11 @@ function openTest(testId: string) {
       </div>
     </div>
 
-    <div v-else-if="visualizationMode === 'flat' && filteredPaths.length" class="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+    <div v-else-if="visualizationMode === 'flat' && filteredPaths.length" class="overflow-hidden mt-2">
       <div
         v-for="testId in sortedPaths"
         :key="testId"
-        class="flex items-center border-b border-slate-200 px-2 py-1.5 last:border-b-0 hover:bg-white"
+        class="flex items-center py-1.5"
       >
         <div class="grow min-w-0">
           <button class="block w-full whitespace-normal break-words text-left text-sm leading-5 text-cyan-700 transition hover:text-cyan-800" :title="testId" @click="runTest(testId)">
@@ -163,7 +162,7 @@ function openTest(testId: string) {
       </div>
     </div>
 
-    <div v-else class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500">
+    <div v-else class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500 mt-2">
       No tests found that match "{{ query }}"
     </div>
   </section>
