@@ -43,7 +43,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
   async function updateActiveTabId() {
     const res = await useActiveTab().getActiveTab()
     activeTabId.value = res?.tab?.id ?? null
-    isLoading.value = activeTabId.value != null && tabsInfoById.value[activeTabId.value]?.status === 'loading'
+    isLoading.value = activeTabId.value != null && tabsInfoById.value[activeTabId.value]?.status === 'loading' && testRun.value?.status !== 'running'
   }
 
   // Keep isLoading updated when tabInfo changes
@@ -51,7 +51,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
     () => tabsInfoById.value,
     () => {
       if (activeTabId.value != null) {
-        isLoading.value = tabsInfoById.value[activeTabId.value]?.status === 'loading'
+        isLoading.value = tabsInfoById.value[activeTabId.value]?.status === 'loading' && testRun.value?.status !== 'running'
         initializeStore()
       }
     },
