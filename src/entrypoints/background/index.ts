@@ -112,10 +112,10 @@ export default defineBackground(() => {
         sendMessage('background-to-popup', { cmd: 'tomation-session-connected', params: { sessionId: session.id } }, 'popup')
       },
       'tomation-test-started': async (params: any) => {
-        const { testId, action } = params
+        const { action } = params
         const testRun = await testrunHandlers[TestRunCmd.TestStarted]({
           tabId,
-          testId,
+          testId: action.description,
           action,
         })
         sendMessage('background-to-popup', { cmd: 'tomation-test-started', params: { testRun: testRunToJSON(testRun) } }, 'popup')
