@@ -282,7 +282,7 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                         Status: <span class="font-medium text-slate-900">{{ session.testRun.status }}</span>
                       </div>
                       <div>
-                        Test ID: {{ session.testRun.testId }}
+                        Test ID: {{ session.testRun.id }}
                       </div>
                       <div>
                         Initial Action: {{ session.testRun.initialAction?.description ?? 'N/A' }}

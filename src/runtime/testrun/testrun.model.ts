@@ -18,10 +18,12 @@ export function createTestRun(input: {
 
   extractActions(input.initialAction)
 
+  const testId = input.testId
+
   const testRun: TestRun = {
-    id: `${input.tabId}-${input.testId}-${now}`,
+    id: `${input.tabId}-${testId}-${now}`,
     tabId: input.tabId,
-    testId: input.testId,
+    testId,
     status: 'running',
     startedAt: Date.now(),
     endedAt: 0,
