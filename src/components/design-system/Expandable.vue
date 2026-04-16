@@ -40,7 +40,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="border-gray-200" :class="{ 'rounded-md border-2 p-2': border, 'border-l-2': !border && isExpanded, 'border-b-2': !border, 'blur-sm': loading }">
+  <div class="border-gray-200 rounded-md" :class="{ 'blur-sm': loading }">
     <div class="flex h-auto">
       <div class="grow mr-2">
         <slot v-if="!loading" :class="{ 'pl-2': isExpanded }" name="header" />
@@ -52,7 +52,7 @@ defineExpose({
         </span>
       </div>
     </div>
-    <div v-if="!loading && isExpanded" class="border-t-2 mt-2 pt-1 border-gray-200" :class="{ 'mt-0 pl-2': !border && isExpanded }">
+    <div v-if="!loading && isExpanded" class="mt-2 pt-1 border-gray-200 mt-0 pl-2">
       <slot />
     </div>
   </div>

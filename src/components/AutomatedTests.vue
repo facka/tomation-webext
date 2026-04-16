@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { sendMessage } from 'webext-bridge/popup'
 import AutomatedTestsTreeNode from '@/components/AutomatedTestsTreeNode.vue'
-import ExpandableSection from '@/components/design-system/ExpandableSection.vue'
 
 const props = defineProps<{
   tests: any
 }>()
 
+const sidepanelStore = useAutomationStore()
 const query = ref('')
+const visualizationMode = ref<'flat' | 'tree'>('tree')
 
 const testsList = computed(() => (props.tests && Object.keys(props.tests)) || [])
 const filteredPaths = computed(() => testsList.value.filter((path: any) => path.toLocaleLowerCase().includes(query.value.toLocaleLowerCase().trim())))
@@ -15,6 +16,9 @@ const sortedPaths = computed(() => filteredPaths.value.toSorted())
 const testsTree = computed(() => {
   return buildTree(sortedPaths.value)
 })
+
+const modeIcon = computed(() => (visualizationMode.value === 'tree' ? 'fa-solid fa-list' : 'fa-solid fa-folder-tree'))
+const modeLabel = computed(() => (visualizationMode.value === 'tree' ? 'Switch to flat list' : 'Switch to tree view'))
 
 type TreeNode = {
   name: string
@@ -65,41 +69,102 @@ async function reloadTests() {
     console.error('Error reloading tests:', error)
   }
 }
+
+function toggleVisualizationMode() {
+  visualizationMode.value = visualizationMode.value === 'tree' ? 'flat' : 'tree'
+}
+
+async function runTest(testId: string) {
+  const activeTab = (await useActiveTab().getActiveTab()).destination
+  sendMessage('sidepanel-to-contentScript', {
+    cmd: 'run-test-request',
+    params: {
+      testId,
+    },
+  }, activeTab)
+}
+
+function openTest(testId: string) {
+  sidepanelStore.openTest(testId)
+}
 </script>
 
 <template>
-  <div>
-    <div v-if="testsList.length === 0" class="p-4 text-center text-gray-500">
+  <section class="space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div v-if="testsList.length === 0" class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500">
       No automated tests found for this workspace.
       <br>
       Make sure you have a test automation script linked to this workspace and that it defines some tests.
     </div>
-  </div>
-  <!-- navbar with search bar a refresh button and the filtered number of tests vs total number of tests -->
-  <div>
-    <div class="flex items-center justify-between mb-1">
-      <h3 class="text-md font-semibold">
-        Automated Tests
-      </h3>
-      <a class="cursor-pointer text-cyan-600" title="Reload tests" @click="reloadTests()">
-        <font-awesome-icon icon="fa-solid fa-refresh" />
-      </a>
+
+    <div class="space-y-2">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold tracking-wide text-slate-800">
+          Automated Tests
+        </h3>
+
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-cyan-700 transition hover:border-cyan-200 hover:bg-cyan-50"
+            :title="modeLabel"
+            @click="toggleVisualizationMode()"
+          >
+            <font-awesome-icon :icon="modeIcon" />
+          </button>
+          <button
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-cyan-700 transition hover:border-cyan-200 hover:bg-cyan-50"
+            title="Reload tests"
+            @click="reloadTests()"
+          >
+            <font-awesome-icon icon="fa-solid fa-refresh" />
+          </button>
+        </div>
+      </div>
+
+      <input
+        v-model="query"
+        name="query"
+        class="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100"
+        label="query"
+        placeholder="Search tests..."
+      >
+
+      <div class="flex items-center">
+        <span class="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">Showing {{ filteredPaths.length }} of {{ testsList.length }}</span>
+      </div>
     </div>
-    <input v-model="query" name="query" class="w-full mb-1 px-1 border-b-2 border-gray-200" label="query" placeholder="Type to search">
-    <div class="flex items-center mb-2">
-      <span class="text-[10px] text-gray-500 ml-auto">Showing {{ filteredPaths.length }} of {{ testsList.length }} total tests</span>
+
+    <div v-if="visualizationMode === 'tree' && filteredPaths.length" class="rounded-lg border border-slate-200 bg-slate-50 p-2">
+      <div
+        v-for="(node, index) in testsTree.children"
+        :key="index"
+        class="pb-1"
+      >
+        <AutomatedTestsTreeNode :node="node" />
+      </div>
     </div>
-  </div>
-  <div v-if="filteredPaths.length">
-    <div
-      v-for="(node, index) in testsTree.children"
-      :key="index"
-      class="pb-1"
-    >
-      <AutomatedTestsTreeNode :node="node" />
+
+    <div v-else-if="visualizationMode === 'flat' && filteredPaths.length" class="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+      <div
+        v-for="testId in sortedPaths"
+        :key="testId"
+        class="flex items-center border-b border-slate-200 px-2 py-1.5 last:border-b-0 hover:bg-white"
+      >
+        <div class="grow min-w-0">
+          <button class="block w-full whitespace-normal break-words text-left text-sm leading-5 text-cyan-700 transition hover:text-cyan-800" :title="testId" @click="runTest(testId)">
+            {{ testId }}
+          </button>
+        </div>
+        <div class="flex-none w-7 self-center text-center">
+          <button class="text-cyan-700 transition hover:text-cyan-800" title="Open test details" @click="openTest(testId)">
+            <font-awesome-icon icon="fa-solid fa-eye" />
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-  <div v-else>
-    No tests found that match "{{ query }}"
-  </div>
+
+    <div v-else class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500">
+      No tests found that match "{{ query }}"
+    </div>
+  </section>
 </template>

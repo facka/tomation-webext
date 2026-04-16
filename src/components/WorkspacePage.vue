@@ -30,10 +30,6 @@ function closeTaskExecutionViewer() {
   sidepanelStore.goTo(VIEWS.MAIN)
 }
 
-function goTo(view: VIEWS) {
-  sidepanelStore.goTo(view)
-}
-
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
 }
