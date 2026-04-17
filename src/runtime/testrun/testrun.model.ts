@@ -13,10 +13,10 @@ export function createTestRun(input: {
     if (action.steps) {
       action.steps.forEach((action: any) => extractActions(action))
     }
-    actionsById.set(action.id, action)
+    actionsById.set(action.id, { ...action })
   }
 
-  extractActions(input.initialAction)
+  extractActions({ ...input.initialAction })
 
   const testId = input.testId
 
@@ -36,19 +36,15 @@ export function createTestRun(input: {
 }
 
 export function startTestRun(testRun: TestRun): TestRun {
-  return {
-    ...testRun,
-    status: 'running',
-    startedAt: Date.now(),
-  }
+  testRun.status = 'running'
+  testRun.startedAt = Date.now()
+  return testRun
 }
 
 export function endTestRun(testRun: TestRun, status: 'passed' | 'failed' | 'cancelled' | 'paused'): TestRun {
-  return {
-    ...testRun,
-    status,
-    endedAt: Date.now(),
-  }
+  testRun.status = status
+  testRun.endedAt = Date.now()
+  return testRun
 }
 
 export function testRunToJSON(testRun: TestRun | null): any {

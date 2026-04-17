@@ -22,7 +22,7 @@ const action = computed(() => props.action || {})
 
 // build actionsById map for the current selected test run initial action and its steps
 const actionsById = computed(() => {
-  const map = new Map<string, any>()
+  /* const map = new Map<string, any>()
   const queue = sidepanelStore.testRun ? [sidepanelStore.testRun?.initialAction] : []
   while (queue.length > 0) {
     const action = queue.shift()
@@ -34,6 +34,8 @@ const actionsById = computed(() => {
     }
   }
   return map
+  */
+  return sidepanelStore.testRun?.actionsById || new Map<string, any>()
 })
 
 const allStepsSuccessful = computed(() => {

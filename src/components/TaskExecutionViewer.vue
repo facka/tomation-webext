@@ -40,7 +40,7 @@ async function runAction(action: string) {
       <button
         class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-green-50 hover:text-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-700"
         title="Play"
-        :disabled="sidepanelStore.testRun?.status === 'running'"
+        :disabled="['running', 'paused', 'cancelled', 'passed', 'failed'].includes(sidepanelStore.testRun?.status || '')"
         @click="runAction('continue-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-play" />
@@ -49,7 +49,7 @@ async function runAction(action: string) {
       <button
         class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-700"
         title="Next"
-        :disabled="sidepanelStore.testRun?.status === 'running'"
+        :disabled="['running', 'paused', 'cancelled', 'passed', 'failed'].includes(sidepanelStore.testRun?.status || '')"
         @click="runAction('next-step-request')"
       >
         <font-awesome-icon icon="fa-solid fa-forward-step" />
@@ -58,15 +58,16 @@ async function runAction(action: string) {
       <button
         class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-amber-50 hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-700"
         title="Pause"
-        :disabled="sidepanelStore.testRun?.status === 'paused'"
+        :disabled="['paused', 'cancelled', 'passed', 'failed'].includes(sidepanelStore.testRun?.status || '')"
         @click="runAction('pause-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-pause" />
       </button>
 
       <button
-        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-700"
         title="Stop"
+        :disabled="['paused', 'cancelled', 'passed', 'failed'].includes(sidepanelStore.testRun?.status || '')"
         @click="runAction('stop-test-request')"
       >
         <font-awesome-icon icon="fa-solid fa-stop" />
@@ -82,7 +83,25 @@ async function runAction(action: string) {
     </div>
   </header>
   <main class="relative mt-1">
-    <ActionViewer v-if="action" :action="action" />
+    <div v-if="sidepanelStore.testRun && sidepanelStore.testRun.initialAction && action" class="mt-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">
+          {{ sidepanelStore.testRun.initialAction.description }}
+        </h2>
+        <div class="flex items-center gap-2">
+          <font-awesome-icon
+            :icon="sidepanelStore.testRun.status === 'passed' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"
+            :class="sidepanelStore.testRun.status === 'passed' ? 'text-green-600' : 'text-red-600'"
+          />
+          <span :class="sidepanelStore.testRun.status === 'passed' ? 'text-green-600' : 'text-red-600'">
+            {{ sidepanelStore.testRun.status === 'passed' ? 'Passed' : 'Failed' }}
+          </span>
+        </div>
+      </div>
+      <div v-for="step in action.steps" :key="step.id" class="mb-2">
+        <ActionViewer v-if="action" :action="step" />
+      </div>
+    </div>
     <div v-else>
       No initial action defined
     </div>
