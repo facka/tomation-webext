@@ -9,7 +9,7 @@ const { title, loading, expanded } = defineProps<{
 </script>
 
 <template>
-  <Expandable :loading="loading" border :expanded="expanded">
+  <Expandable :loading="loading" :expanded="expanded">
     <template #header>
       <div class="flex">
         <div class="w-5/12 font-bold">

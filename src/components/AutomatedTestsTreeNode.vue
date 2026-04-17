@@ -44,7 +44,7 @@ async function openTest() {
 
 <template>
   <div v-if="node.children.length" class="text-left">
-    <Expandable :loading="false" expanded border>
+    <Expandable :loading="false" expanded>
       <template #header>
         <div>{{ node.name }}</div>
       </template>

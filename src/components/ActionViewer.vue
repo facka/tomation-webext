@@ -167,11 +167,11 @@ async function retryAction() {
 </script>
 
 <template>
-  <div :id="`action-${action.id}`" />
+  <div :id="`action-${action.id}`" class="mb-2" />
   <div v-if="action?.type === 'Action'" class="text-left">
     <Expandable ref="expandableElem" expanded>
       <template #header>
-        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2 shadow-sm">
+        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
           <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
             <font-awesome-icon :icon="getStatusIcon(status)" />
           </div>
@@ -192,7 +192,6 @@ async function retryAction() {
       <div
         v-for="(step, index) in action.steps"
         :key="index"
-        :class="{ 'pb-2': index === (action.steps.length - 1) }"
       >
         <ActionViewer :action="step" />
       </div>
@@ -230,7 +229,7 @@ async function retryAction() {
   </div>
   -->
   <div v-else>
-    <div class="rounded-lg border border-slate-200 bg-white px-2 py-2 shadow-sm">
+    <div class="rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
       <div class="flex items-center gap-2">
         <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
           <font-awesome-icon :icon="getStatusIcon(status)" />
