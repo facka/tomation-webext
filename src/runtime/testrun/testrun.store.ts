@@ -38,7 +38,7 @@ export class InMemoryTestRunStore implements TestRunStore {
   }
 
   getByTabId(tabId: number): TestRun | null {
-    const testRun = this.getAll().find(testRun => testRun.tabId === tabId)
+    const testRun = this.getAll().find(testRun => testRun.tabId === tabId && testRun.status === 'running')
     if (!testRun) {
       return null
     }

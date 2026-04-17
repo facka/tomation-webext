@@ -129,6 +129,19 @@ export const useAutomationStore = defineStore('automationStore', () => {
     return testRun.value
   }
 
+  function closeTestViewer() {
+    testRun.value = null
+    currentActionId.value = null
+    sendMessage('sidepanel-to-background', {
+      cmd: 'close-test-viewer',
+      params: {
+        sessionId: tomationSession.value.id,
+        tabId: tomationSession.value.tabId,
+      },
+    }, 'background')
+    goTo(VIEWS.MAIN)
+  }
+
   /*
   function setData(data: any) {
     console.log('Store.setData(): Automated Tests: ', data.automatedTests)
@@ -291,5 +304,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
     getTomationSession,
     getTestRun,
     openTest,
+    closeTestViewer,
   }
 })

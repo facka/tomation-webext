@@ -12,6 +12,7 @@ export const TestRunCmd = {
   TestPause: 'test-pause',
   TestPlay: 'test-play',
   GetByTabId: 'get-by-tab-id',
+  ClearTestRun: 'clear-test-run',
 } as const
 
 export type TestRunCmdType = (typeof TestRunCmd)[keyof typeof TestRunCmd]
@@ -60,6 +61,11 @@ export type TestRunMessages = {
   [TestRunCmd.GetByTabId]: {
     params: { tabId: number }
     result: TestRun | null
+  }
+
+  [TestRunCmd.ClearTestRun]: {
+    params: { tabId: number }
+    result: void
   }
 }
 
@@ -121,6 +127,15 @@ const handlers: { [K in TestRunCmdType]: Handler<K> } = {
   async [TestRunCmd.GetByTabId](params) {
     const { tabId } = params
     return testrunStore.getByTabId(tabId)
+  },
+
+  async [TestRunCmd.ClearTestRun](params) {
+    const { tabId } = params
+    const testRun = testrunStore.getByTabId(tabId)
+    if (!testRun) {
+      return
+    }
+    return testrunStore.delete(testRun.id)
   },
 }
 

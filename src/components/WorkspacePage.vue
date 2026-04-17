@@ -2,12 +2,10 @@
 import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMounted, ref } from 'vue'
 import AutomatedTests from '@/components/AutomatedTests.vue'
-import History from '@/components/History.vue'
 import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
 import Test from '@/components/Test.vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
-import { VIEWS } from '~/logic/views'
 
 const props = defineProps<{
   workspace: Workspace
@@ -25,10 +23,6 @@ const urlStatus = ref<string>('')
 onMounted(async () => {
   console.log('Workspace component mounted with workspace:', workspace.value, 'and tabId:', tabId.value)
 })
-
-function closeTaskExecutionViewer() {
-  sidepanelStore.goTo(VIEWS.MAIN)
-}
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
@@ -65,11 +59,17 @@ function reloadPage() {
   <main v-if="!loading" class="flex-1 w-full px-2 py-2 text-gray-700 relative overflow-y-auto">
     <div v-if="sidepanelStore.getTomationSession()?.connected ">
       <div v-if="sidepanelStore.view === 'VIEWER'">
-        <TaskExecutionViewer :action="sidepanelStore.testRun?.initialAction" @@close="closeTaskExecutionViewer" />
+        <TaskExecutionViewer :action="sidepanelStore.testRun?.initialAction" />
       </div>
       <div v-else-if="sidepanelStore.view === 'MAIN'">
-        <UrlStatus :url="workspace?.script" class="mb-2" />
-        <AutomatedTests :tests="sidepanelStore.getTomationSession()?.automatedTests" />
+        <UrlStatus :url="workspace?.script" class="mb-2" @status="updateURLStatus($event)" />
+        <AutomatedTests v-if="urlStatus === 'ok'" :tests="sidepanelStore.getTomationSession()?.automatedTests" />
+        <div v-if="urlStatus === 'error'" class="flex flex-col items-center gap-4 py-10">
+          <font-awesome-icon icon="fa-solid fa-plug-circle-bolt" class="text-gray-400 text-6xl" />
+          <div class="text-gray-500 text-sm">
+            The script URL is not connected. Please make sure the URL is correct and the server hosting the script is running.
+          </div>
+        </div>
       </div>
       <div v-else-if="sidepanelStore.view === 'TEST'">
         <Test />

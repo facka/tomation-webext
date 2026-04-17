@@ -5,17 +5,13 @@ import ActionViewer from '@/components/ActionViewer.vue'
 const props = defineProps<{
   action: any
 }>()
-const emit = defineEmits<{
-  (e: '@close'): void
-}>()
 
 const action = computed(() => props.action)
 
 const sidepanelStore = useAutomationStore()
 
 function closeRunView() {
-  // eslint-disable-next-line vue/custom-event-name-casing
-  emit('@close')
+  sidepanelStore.closeTestViewer()
 }
 
 async function runAction(action: string) {
