@@ -251,6 +251,18 @@ export default defineBackground(() => {
       ...workspaceHandlers,
       ...tomationSessionHandlers,
       ...testrunHandlers,
+      'close-test-viewer': async (params: any) => {
+        console.log('[tomation-webext][background] close-test-viewer received from side panel:', params)
+        const { sessionId, tabId } = params
+        const session = getTomationSessionByTabId(tabId)
+        if (!session || session.id !== sessionId) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} and sessionId ${sessionId} while trying to close test viewer`)
+          return
+        }
+        testrunHandlers[TestRunCmd.ClearTestRun]({
+          tabId,
+        })
+      },
     }
     const handler = (handlers as any)[cmd]
     if (!handler)
