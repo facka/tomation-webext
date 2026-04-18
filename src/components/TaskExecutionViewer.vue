@@ -84,7 +84,7 @@ async function runAction(action: string) {
           <button
             class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-xs text-gray-700 transition hover:bg-green-50 hover:text-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-700"
             title="Play"
-            :disabled="['running', 'paused', 'cancelled', 'passed', 'failed'].includes(testStatus)"
+            :disabled="['running', 'cancelled', 'passed', 'failed'].includes(testStatus)"
             @click="runAction('continue-test-request')"
           >
             <font-awesome-icon icon="fa-solid fa-play" />
