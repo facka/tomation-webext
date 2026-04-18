@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '@/components/design-system/Expandable.vue'
-import { VIEWS } from '~/logic/views'
 
 const props = defineProps<{
   node: TreeNode
+  isFavorite?: (testId: string) => boolean
+  toggleFavorite?: (testId: string) => void
 }>()
 
 const sidepanelStore = useAutomationStore()
@@ -36,29 +37,19 @@ async function runTest(testId: string) {
   }, activeTab)
 }
 
-function goTo(view: VIEWS, viewParams: any = {}) {
-  sidepanelStore.goTo(view, viewParams)
-}
-
 async function openTest() {
   console.log('Opening test with id:', testId.value)
-  const test: any = await sendMessage('sidepanel-to-background', {
-    cmd: 'get-test-by-id',
-    params: {
-      testId: testId.value,
-    },
-  }, 'background')
+  sidepanelStore.openTest(testId.value)
+}
 
-  console.log('Open Test: ', test)
-  if (test?.action) {
-    goTo(VIEWS.TEST, { action: test?.action })
-  }
+function onToggleFavorite() {
+  props.toggleFavorite?.(testId.value)
 }
 </script>
 
 <template>
   <div v-if="node.children.length" class="text-left">
-    <Expandable :loading="false" expanded border>
+    <Expandable :loading="false" expanded>
       <template #header>
         <div>{{ node.name }}</div>
       </template>
@@ -66,20 +57,28 @@ async function openTest() {
         <div
           v-for="(childNode, index) in node.children"
           :key="index"
-          :class="{ 'pb-2': index === (node.children.length - 1) }"
         >
-          <AutomatedTestsTreeNode :node="childNode" />
+          <AutomatedTestsTreeNode :node="childNode" :is-favorite="props.isFavorite" :toggle-favorite="props.toggleFavorite" />
         </div>
       </div>
     </Expandable>
   </div>
   <div v-else>
-    <div class="flex border-b-2 border-gray-200">
+    <div class="flex">
       <div class="grow py-1">
-        <span
-          class="cursor-pointer text-cyan-600"
-          @click="runTest(testId)"
-        >{{ node.name }}</span>
+        <div class="group inline-flex items-center gap-1.5">
+          <span
+            class="cursor-pointer text-cyan-600"
+            @click="runTest(testId)"
+          >{{ node.name }}</span>
+          <button
+            class="cursor-pointer transition opacity-0 group-hover:opacity-100 focus:opacity-100"
+            :title="props.isFavorite?.(testId) ? 'Remove from favorites' : 'Mark as favorite'"
+            @click="onToggleFavorite()"
+          >
+            <font-awesome-icon icon="fa-solid fa-star" :class="props.isFavorite?.(testId) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'" />
+          </button>
+        </div>
       </div>
       <div class="flex-none w-6 font-bold py-1 text-center">
         <a class="cursor-pointer text-cyan-600" @click="openTest()">

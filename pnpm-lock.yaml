@@ -33,8 +33,8 @@ importers:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.9.3)(vue@3.5.27(typescript@5.9.3))
       tomation:
-        specifier: ^0.0.6
-        version: 0.0.6
+        specifier: ^0.0.11
+        version: 0.0.11
       unocss:
         specifier: ^66.6.0
         version: 66.6.0(postcss@8.5.6)(vite@7.3.1(@types/node@25.1.0)(jiti@2.6.1)(yaml@2.8.2))
@@ -2997,8 +2997,8 @@ packages:
     resolution: {integrity: sha512-41wJyvKep3yT2tyPqX/4blcfybknGB4D+oETKLs7Q76UiPqRpUJK3hr1nxelyYO0PHKVzJwlu0aCeEAsGI6rpw==}
     engines: {node: '>=20'}
 
-  tomation@0.0.6:
-    resolution: {integrity: sha512-L3N+C13uA3R2gXVBcIcw/Wss0IIPtIYGvK07An6Xb2wOPfc2RH0mb0mCFld7WPMdNorMpiZRy3F/Ho3X8qJvow==}
+  tomation@0.0.11:
+    resolution: {integrity: sha512-X78tP8tqTRuDKg054pDcaSdykZwfV4NFJQGJET3oBJZwjkaGlxtumV0sqDI2A7lllL9nl5aQPazeDe3O6xSLOQ==}
 
   toml-eslint-parser@1.0.3:
     resolution: {integrity: sha512-A5F0cM6+mDleacLIEUkmfpkBbnHJFV1d2rprHU2MXNk7mlxHq2zGojA+SRvQD1RoMo9gqjZPWEaKG4v1BQ48lw==}
@@ -6402,7 +6402,7 @@ snapshots:
       '@sindresorhus/base62': 1.0.0
       reserved-identifiers: 1.2.0
 
-  tomation@0.0.6:
+  tomation@0.0.11:
     dependencies:
       uuid: 9.0.1
 

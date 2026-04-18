@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 
 const props = defineProps<{
   loading?: boolean
-  border?: boolean
   expanded?: boolean
 }>()
 
@@ -12,7 +11,6 @@ const emit = defineEmits<{
 }>()
 
 const loading = computed(() => props.loading)
-const border = computed(() => props.border)
 
 const isExpanded = ref(props.expanded ?? false)
 
@@ -40,19 +38,19 @@ defineExpose({
 </script>
 
 <template>
-  <div class="border-gray-200" :class="{ 'rounded-md border-2 p-2': border, 'border-l-2': !border && isExpanded, 'border-b-2': !border, 'blur-sm': loading }">
-    <div class="flex h-auto">
-      <div class="grow mr-2">
+  <div :class="{ 'blur-sm': loading }">
+    <div class="flex h-auto items-center justify-between">
+      <div class="grow">
         <slot v-if="!loading" :class="{ 'pl-2': isExpanded }" name="header" />
       </div>
-      <div class="flex-none w-3 grid justify-items-end cursor-pointer" @click="toggleExpandedState">
+      <div class="absolute right-3 w-4 h-4 grid place-items-center cursor-pointer rounded-md" @click="toggleExpandedState">
         <span>
           <font-awesome-icon v-show="!isExpanded" icon="fa-solid fa-angle-down" />
           <font-awesome-icon v-show="isExpanded" icon="fa-solid fa-angle-up" />
         </span>
       </div>
     </div>
-    <div v-if="!loading && isExpanded" class="border-t-2 mt-2 pt-1 border-gray-200" :class="{ 'mt-0 pl-2': !border && isExpanded }">
+    <div v-if="!loading && isExpanded" class="pl-2">
       <slot />
     </div>
   </div>

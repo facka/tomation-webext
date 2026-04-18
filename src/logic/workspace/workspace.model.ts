@@ -1,5 +1,8 @@
 import type { Workspace } from './workspace.types'
 
+// workspaces are stored in browser storage and injected into content script when requested
+// workspaces are created/updated/deleted in the background script and sent to content script when requested
+
 export function createWorkspace(input: {
   id: string
   name: string
