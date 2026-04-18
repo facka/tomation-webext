@@ -61,6 +61,7 @@ watch(allStepsSuccessful, (successful) => {
 const status = computed(() => {
   return (actionsById.value.get(action.value.id)?.status) || ACTION_STATUS.WAITING
 })
+const waitingOpacityClass = computed(() => (status.value === ACTION_STATUS.WAITING ? 'opacity-50' : 'opacity-100'))
 const error = computed(() => {
   return (actionsById.value.get(action.value.id)?.error) || ''
 })
@@ -173,7 +174,7 @@ async function retryAction() {
   <div v-if="action?.type === 'Action'" class="text-left">
     <Expandable ref="expandableElem" expanded>
       <template #header>
-        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
+        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm" :class="waitingOpacityClass">
           <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
             <font-awesome-icon :icon="getStatusIcon(status)" />
           </div>
@@ -231,7 +232,7 @@ async function retryAction() {
   </div>
   -->
   <div v-else>
-    <div class="rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
+    <div class="rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm" :class="waitingOpacityClass">
       <div class="flex items-center gap-2">
         <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
           <font-awesome-icon :icon="getStatusIcon(status)" />
