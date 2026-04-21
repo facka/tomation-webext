@@ -6,8 +6,6 @@ import { onMounted, ref } from 'vue'
 import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
-import { TestRunCmd } from '@/runtime/testrun/testrun.handlers'
-import { testRunFromJSON } from '@/runtime/testrun/testrun.model'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
 const allWorkspaces = ref<Workspace[]>([])
@@ -19,7 +17,7 @@ const sessionToDelete = ref<TomationSession | null>(null)
 const closeTabWhenDeletingSession = ref(false)
 const deletingSession = ref(false)
 const deletingSessionError = ref<string | null>(null)
-let selectedWorkspaceLoadId = 0
+// let selectedWorkspaceLoadId = 0
 
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
