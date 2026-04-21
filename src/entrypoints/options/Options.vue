@@ -10,14 +10,10 @@ import { TestRunCmd } from '@/runtime/testrun/testrun.handlers'
 import { testRunFromJSON } from '@/runtime/testrun/testrun.model'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
-type WorkspaceSession = TomationSession & {
-  testRun: TestRun | null
-}
-
 const allWorkspaces = ref<Workspace[]>([])
 
 const selectedWorkspace = ref<Workspace | null>(null)
-const sessionsForSelectedWorkspace = ref<WorkspaceSession[]>([])
+const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
 const loadingSessionsForSelectedWorkspace = ref(false)
 const sessionToDelete = ref<TomationSession | null>(null)
 const closeTabWhenDeletingSession = ref(false)
@@ -37,7 +33,7 @@ onMounted(async () => {
 })
 
 async function selectWorkspace(workspace: Workspace) {
-  const loadId = ++selectedWorkspaceLoadId
+  // const loadId = ++selectedWorkspaceLoadId
   selectedWorkspace.value = workspace
   loadingSessionsForSelectedWorkspace.value = true
   const sessions = await sendMessage('options-to-background', {
@@ -45,6 +41,7 @@ async function selectWorkspace(workspace: Workspace) {
     params: { workspaceId: workspace.id },
   }, 'background') as TomationSession[]
 
+  /*
   const sessionsWithTestRuns = await Promise.all(
     sessions.map(async (session) => {
       const serializedTestRun = await sendMessage('options-to-background', {
@@ -62,8 +59,10 @@ async function selectWorkspace(workspace: Workspace) {
   if (loadId !== selectedWorkspaceLoadId) {
     return
   }
+  */
+  console.log('Sessions for workspace', workspace.id, sessions)
 
-  sessionsForSelectedWorkspace.value = sessionsWithTestRuns
+  sessionsForSelectedWorkspace.value = sessions
   loadingSessionsForSelectedWorkspace.value = false
 }
 
@@ -86,7 +85,7 @@ async function deleteWorkspace(id: string) {
 function testsCount(session: TomationSession): number {
   return Object.keys(session.automatedTests ?? {}).length
 }
-
+/*
 function actionsCount(testRun: TestRun | null): number {
   return testRun?.actionsById.size ?? 0
 }
@@ -98,7 +97,7 @@ function formatTimestamp(timestamp: number): string {
 
   return new Date(timestamp).toLocaleString()
 }
-
+*/
 function goToTab(tabId: number) {
   browser.tabs.update(tabId, { active: true })
 }
@@ -216,6 +215,9 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                 {{ selectedWorkspace.name }}
               </h2>
               <p class="text-sm text-slate-500">
+                Id: {{ selectedWorkspace.id }}
+              </p>
+              <p class="text-sm text-slate-500">
                 Host: {{ selectedWorkspace.host }}
               </p>
               <p class="text-sm text-slate-500 break-all">
@@ -277,6 +279,7 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                     <div class="text-xs font-semibold text-slate-600">
                       Test Run
                     </div>
+                    <!--
                     <div v-if="session.testRun" class="mt-2 space-y-1 text-xs text-slate-700">
                       <div>
                         Status: <span class="font-medium text-slate-900">{{ session.testRun.status }}</span>
@@ -300,6 +303,7 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                     <div v-else class="mt-2 text-xs text-slate-500">
                       No test run found for this session.
                     </div>
+                    -->
                   </div>
                 </li>
               </ul>
