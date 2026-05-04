@@ -56,6 +56,9 @@ function goTo(view: VIEWS) {
     <h3 class="font-bold mt-2">
       {{ sidepanelStore.currentSelectedTest?.initialAction.description }}
     </h3>
+    <p>
+      {{ sidepanelStore.currentSelectedTest?.initialAction.id }}
+    </p>
 
     <div v-for="(step, index) in sidepanelStore.currentSelectedTest?.initialAction.steps" :key="index">
       <ActionViewer :action="step" />

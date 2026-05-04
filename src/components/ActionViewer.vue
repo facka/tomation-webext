@@ -178,15 +178,20 @@ async function retryAction() {
           <div class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs" :class="getStatusIconClass(status)">
             <font-awesome-icon :icon="getStatusIcon(status)" />
           </div>
-          <span class="grow flex items-center" :class="getStatusTextClass(status)">
-            <span class="font-medium">{{ action.description }}</span>
-            <span
-              v-if="action.params && Object.keys(action.params).length"
-              :title="JSON.stringify(action.params)"
-              class="ml-1 inline-flex cursor-pointer items-center rounded-full bg-cyan-50 px-1.5 py-0.5 text-xs text-cyan-700"
-            >{{ Object.keys(action.params).length === 1 ? Object.values(action.params)[0] : Object.keys(action.params).length }}
-            </span>
-          </span>
+          <div class="grow min-w-0">
+            <div class="flex items-center" :class="getStatusTextClass(status)">
+              <span class="font-medium">{{ action.description }}</span>
+              <span
+                v-if="action.params && Object.keys(action.params).length"
+                :title="JSON.stringify(action.params)"
+                class="ml-1 inline-flex cursor-pointer items-center rounded-full bg-cyan-50 px-1.5 py-0.5 text-xs text-cyan-700"
+              >{{ Object.keys(action.params).length === 1 ? Object.values(action.params)[0] : Object.keys(action.params).length }}
+              </span>
+            </div>
+            <div class="text-[10px] leading-4 text-slate-400">
+              {{ action.id }}
+            </div>
+          </div>
           <div v-if="tries && tries >= 1" class="mt-0.5 flex-none rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
             {{ tries }}/10
           </div>
@@ -241,6 +246,9 @@ async function retryAction() {
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-medium leading-5" :class="getStatusTextClass(status)">{{ action.description }}</span>
             <span v-if="tries && tries >= 1" class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Tries {{ tries }}/10</span>
+          </div>
+          <div class="text-[10px] leading-4 text-slate-400">
+            {{ action.id }}
           </div>
           <div v-if="error" class="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-sm text-rose-700">
             Error: {{ error }}
