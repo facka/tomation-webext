@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Workspace } from '@/logic/workspace/workspace.types'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AutomatedTests from '@/components/AutomatedTests.vue'
 import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
 import Test from '@/components/Test.vue'
@@ -15,8 +15,9 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-const workspace = ref<Workspace>(props.workspace)
-const tabId = ref<number>(props.tabId)
+const workspace = computed<Workspace>(() => props.workspace)
+const tabId = computed<number>(() => props.tabId)
+const loading = computed<boolean>(() => props.loading)
 
 const sidepanelStore = useAutomationStore()
 
