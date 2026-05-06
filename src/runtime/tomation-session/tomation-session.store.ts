@@ -13,6 +13,7 @@ export function createSession(params: {
     tabId: params.tabId,
     connected: false,
     automatedTests: {},
+    testsLoaded: false,
   }
   sessionById.set(session.id, session)
   return session

@@ -1,4 +1,3 @@
-import { get } from '@vueuse/core'
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
 import { TestRunCmd, testrunHandlers } from '@/runtime/testrun/testrun.handlers'
@@ -11,10 +10,12 @@ import {
   registerTestForSessionByTabId,
   setTomationSessionConnected,
   setTomationSessionURLMismatch,
+  clearTomationSessionTests,
 } from '@/runtime/tomation-session/tomation-session.service'
 import { useActiveTab } from '~/composables/useActiveTab'
 // import { addOnChunkedMessageListener, sendChunkedResponse } from 'ext-send-chunked-message'
 import { VIEWS } from '~/logic/views'
+import { updateSession } from '@/runtime/tomation-session/tomation-session.store'
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id })
@@ -122,11 +123,11 @@ export default defineBackground(() => {
       },
       'tomation-action-update': async (params: any) => {
         console.log('[tomation-webext][background] action-update received in background:', params)
-        await testrunHandlers[TestRunCmd.ActionUpdate]({
-          tabId,
-          action: params.action,
-        })
         try {
+          await testrunHandlers[TestRunCmd.ActionUpdate]({
+            tabId,
+            action: params.action,
+          })
           sendMessage('background-to-popup', { cmd: 'tomation-action-update', params }, 'popup')
         }
         catch (err) {
@@ -153,10 +154,25 @@ export default defineBackground(() => {
         // const memory = await TomationStorage.memory.getValue()
         // sendMessage('read-memory-response', memory[params.memorySlotName], activeTab)
       },
+      'tomation-clear-tests': async (params: any) => {
+        console.log('[tomation-webext][background] clear-tests', params)
+        const session = getTomationSessionByTabId(tabId!)
+        if (!session) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} while trying to clear tests`)
+          return
+        }
+        clearTomationSessionTests(tabId!)
+        sendMessage('background-to-popup', { cmd: 'tomation-clear-tests', params: { sessionId: session.id } }, 'popup')
+      },
       'tomation-register-test': async (params: any) => {
         console.log('[tomation-webext][background] register-test', params)
+        const session = getTomationSessionByTabId(tabId!)
+        if (!session) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} while trying to register test`)
+          return
+        }
         const { id, action } = params
-        if (!id || !action) {
+        if (!id) {
           console.warn('[tomation-webext][background] Missing parameters for register-test command', params)
           throw new Error(`Missing parameters for register-test command. Params = ${JSON.stringify(params)} `)
         }
@@ -167,13 +183,23 @@ export default defineBackground(() => {
           return
         }
         try {
-          registerTestForSessionByTabId(tabId, id, action)
-          sendMessage('background-to-popup', { cmd: 'tomation-register-test', params }, 'popup')
+          registerTestForSessionByTabId(tabId, id)
+          sendMessage('background-to-popup', { cmd: 'tomation-register-test', params: { sessionId: session.id, id } }, 'popup')
         }
         catch (err) {
           console.error('[tomation-webext][background] Error registering test for session', err)
           throw err
         }
+      },
+      'tomation-tests-loaded': async (params: any) => {
+        console.log('[tomation-webext][background] test-loaded', params)
+        const session = getTomationSessionByTabId(tabId!)
+        if (!session) {
+          console.warn(`[tomation-webext][background] No session found for tabId ${tabId} while trying to clear tests`)
+          return
+        }
+        updateSession(session.id, { testsLoaded: true })
+        sendMessage('background-to-popup', { cmd: 'tomation-test-loaded', params }, 'popup')
       },
       'tomation-test-passed': async (params: any) => {
         await testrunHandlers[TestRunCmd.TestPassed]({
@@ -228,16 +254,12 @@ export default defineBackground(() => {
     return { ok: true }
   })
 
-  workspaceHandlers[WorkspaceCmd.Create]({
-    name: 'Escribehost Stage',
-    host: 'ehr.stage.int.aws.lillegroup.com',
-    script: 'http://127.0.0.1:8080/tests.bundle.js',
-  })
-
   onMessage('options-to-background', async ({ data }) => {
     const { cmd, params } = (data as any) || {}
     const handlers = {
       ...workspaceHandlers,
+      ...tomationSessionHandlers,
+      ...testrunHandlers,
     }
     const handler = (handlers as any)[cmd]
     if (!handler)

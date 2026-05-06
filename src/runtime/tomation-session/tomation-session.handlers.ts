@@ -1,7 +1,7 @@
 import type { TomationSession } from './tomation-session.types'
 import {
-  clearTomationSession,
   clearTomationSessionByTabId,
+  clearTomationSessionTests,
   createTomationSession,
   getTestById,
   getTomationSessionByTabId,
@@ -68,7 +68,7 @@ export type TomationSessionMessages = {
 
   [TomationSessionCmd.GetTestById]: {
     params: { testId: string, tabId: number }
-    result: TomationSession | null
+    result: any | null
   }
 }
 
@@ -88,7 +88,7 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   },
 
   async [TomationSessionCmd.ClearForTab](params) {
-    clearTomationSession(params.tabId)
+    clearTomationSessionTests(params.tabId)
   },
 
   async [TomationSessionCmd.Remove](params) {
@@ -114,7 +114,7 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   },
 
   async [TomationSessionCmd.RegisterTest](params) {
-    registerTestForSessionByTabId(params.tabId, params.testId, params.initialAction)
+    registerTestForSessionByTabId(params.tabId, params.testId)
   },
 
   async [TomationSessionCmd.GetByWorkspaceId](params) {

@@ -136,7 +136,7 @@ function openTest(testId: string) {
       Make sure you have a test automation script linked to this workspace and that it defines some tests.
     </div>
 
-    <div class="space-y-2">
+    <div v-else class="space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-semibold tracking-wide text-slate-800">
           Automated Tests

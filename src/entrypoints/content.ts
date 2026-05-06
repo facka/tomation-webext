@@ -1,11 +1,34 @@
 import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
 
+type ListenerCleanup = () => void
+
+const listenerCleanups: ListenerCleanup[] = []
+
+function registerListener(name: string, cleanup: ListenerCleanup) {
+  listenerCleanups.push(cleanup)
+  console.info(`[tomation-webext] Registered listener: ${name}. Total listeners: ${listenerCleanups.length}`)
+}
+
+function cleanupListeners() {
+  const totalListeners = listenerCleanups.length
+
+  while (listenerCleanups.length > 0) {
+    const cleanup = listenerCleanups.pop()
+    try {
+      cleanup?.()
+    }
+    catch (err) {
+      console.error('[tomation-webext] Failed to cleanup listener', err)
+    }
+  }
+
+  console.info(`[tomation-webext] Removed ${totalListeners} listeners. Total listeners: ${listenerCleanups.length}`)
+}
+
 async function sendToBackground(payload: any = { hello: 'background' }) {
   try {
-    const resp = await sendMessage('content-to-background', payload)
-    console.info('[tomation-webext] Sent message to background', resp)
-    return resp
+    return await sendMessage('content-to-background', payload)
   }
   catch (err) {
     console.log('[tomation-webext] Failed to send message to background: payload', payload)
@@ -50,7 +73,7 @@ async function init() {
     return
   }
 
-  window.addEventListener('message', (event: any) => {
+  const handleWindowMessage = (event: any) => {
     // console.log('[tomation-webext] window message event', event)
     // console.log('[tomation-webext] Sender: ', event.data.sender)
     const { message, sender, payload } = event.data || {}
@@ -66,6 +89,11 @@ async function init() {
     else {
       // console.log('[tomation-webext] Ignored message that is not from injected script')
     }
+  }
+
+  window.addEventListener('message', handleWindowMessage)
+  registerListener('window.message', () => {
+    window.removeEventListener('message', handleWindowMessage)
   })
 
   if (workspace?.script) {
@@ -82,7 +110,7 @@ async function init() {
     console.info('[tomation-webext] No script defined for this workspace, skipping injection')
   }
 
-  onMessage('sidepanel-to-contentScript', ({ data }: any) => {
+  const stopSidepanelMessageListener = onMessage('sidepanel-to-contentScript', ({ data }: any) => {
     // if the message is handled by the injected script, forward it
     const { cmd, params } = data
     if ([
@@ -96,6 +124,7 @@ async function init() {
       'skip-action-request',
       'user-accept-request',
       'user-reject-request',
+      'setup-tests-request',
     ].includes(cmd)) {
       console.log('[tomation-webext] forwarding message to injected script:', cmd, params)
       window.postMessage({
@@ -115,11 +144,14 @@ async function init() {
       window.location.reload()
     }
   })
+
+  registerListener('sidepanel-to-contentScript', stopSidepanelMessageListener)
 }
 
 export default defineContentScript({
   matches: ['*://*/*'],
   main() {
+    cleanupListeners()
     init()
   },
 })

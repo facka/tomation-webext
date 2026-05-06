@@ -157,10 +157,9 @@ function getMinifiedTestsFromSession(session: TomationSession) {
   for (const [testId, test] of Object.entries(session.automatedTests ?? {})) {
     minifiedTests[testId] = {
       name: test.name,
-      initialAction: getMinifiedStep(test.initialAction),
     }
   }
-  return minifiedTests
+  return Object.keys(minifiedTests)
 }
 </script>
 
@@ -267,41 +266,47 @@ function getMinifiedTestsFromSession(session: TomationSession) {
                   >
                     Tab ID: {{ session.tabId }}
                   </button>
-                  <div>
-                    <div class="mt-2 text-xs font-semibold text-slate-600">
-                      Automated Tests ({{ testsCount(session) }}):
+                  <!-- tests loaded banner-->
+                  <div v-if="session.testsLoaded" class="mt-2 rounded bg-emerald-100 p-2 text-xs text-emerald-700">
+                     <div>
+                      <div class="mt-2 text-xs font-semibold text-slate-600">
+                        Automated Tests ({{ testsCount(session) }}):
+                      </div>
+                      <pre class="mt-2 max-h-40 overflow-auto rounded bg-slate-100 p-2 text-xs text-slate-700">{{ JSON.stringify(getMinifiedTestsFromSession(session), null, 2) }}</pre>
                     </div>
-                    <pre class="mt-2 max-h-40 overflow-auto rounded bg-slate-100 p-2 text-xs text-slate-700">{{ JSON.stringify(getMinifiedTestsFromSession(session), null, 2) }}</pre>
+                    <div class="mt-3 rounded-md border border-slate-200 bg-white p-3">
+                      <div class="text-xs font-semibold text-slate-600">
+                        Test Run
+                      </div>
+                      <!--
+                      <div v-if="session.testRun" class="mt-2 space-y-1 text-xs text-slate-700">
+                        <div>
+                          Status: <span class="font-medium text-slate-900">{{ session.testRun.status }}</span>
+                        </div>
+                        <div>
+                          Test ID: {{ session.testRun.id }}
+                        </div>
+                        <div>
+                          Initial Action: {{ session.testRun.initialAction?.description ?? 'N/A' }}
+                        </div>
+                        <div>
+                          Actions: {{ actionsCount(session.testRun) }}
+                        </div>
+                        <div>
+                          Started: {{ formatTimestamp(session.testRun.startedAt) }}
+                        </div>
+                        <div>
+                          Ended: {{ formatTimestamp(session.testRun.endedAt) }}
+                        </div>
+                      </div>
+                      <div v-else class="mt-2 text-xs text-slate-500">
+                        No test run found for this session.
+                      </div>
+                      -->
+                    </div>
                   </div>
-                  <div class="mt-3 rounded-md border border-slate-200 bg-white p-3">
-                    <div class="text-xs font-semibold text-slate-600">
-                      Test Run
-                    </div>
-                    <!--
-                    <div v-if="session.testRun" class="mt-2 space-y-1 text-xs text-slate-700">
-                      <div>
-                        Status: <span class="font-medium text-slate-900">{{ session.testRun.status }}</span>
-                      </div>
-                      <div>
-                        Test ID: {{ session.testRun.id }}
-                      </div>
-                      <div>
-                        Initial Action: {{ session.testRun.initialAction?.description ?? 'N/A' }}
-                      </div>
-                      <div>
-                        Actions: {{ actionsCount(session.testRun) }}
-                      </div>
-                      <div>
-                        Started: {{ formatTimestamp(session.testRun.startedAt) }}
-                      </div>
-                      <div>
-                        Ended: {{ formatTimestamp(session.testRun.endedAt) }}
-                      </div>
-                    </div>
-                    <div v-else class="mt-2 text-xs text-slate-500">
-                      No test run found for this session.
-                    </div>
-                    -->
+                  <div v-else class="mt-2 rounded bg-yellow-100 p-2 text-xs text-yellow-700">
+                    Tests not loaded yet.
                   </div>
                 </li>
               </ul>

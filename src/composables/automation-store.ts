@@ -29,6 +29,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
     tabId: -1,
     connected: false,
     automatedTests: {},
+    testsLoaded: false,
   })
 
   const testRun = ref<TestRun | null>(null)
@@ -87,6 +88,8 @@ export const useAutomationStore = defineStore('automationStore', () => {
           existentTestRun.actionsById = new Map(Object.entries(existentTestRun.actionsById))
         }
 
+        // TODO here is when actionsIds are renewed from the new script loaded in the content script
+
         testRun.value = existentTestRun as unknown as TestRun
         console.log('Existing session found for tab. Session:', existentSession, 'Test run:', existentTestRun)
         if (existentTestRun && existentTestRun.status === 'running') {
@@ -116,10 +119,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
     return actionsById.value[actionId]
   }
   */
-  function getTomationSession() {
-    return tomationSession.value
-  }
-
   function getTestRun(tabId: number): TestRun | null {
     if (!tomationSession.value || tomationSession.value.tabId !== tabId) {
       console.warn(`No session found for tabId ${tabId}. Cannot get test run.`)
@@ -243,19 +242,14 @@ export const useAutomationStore = defineStore('automationStore', () => {
       'tomation-session-created': (params: any) => {
         const newTomationSession = params
         tomationSession.value = newTomationSession
-        console.log(`[tomation-webext][popup] Session initialized with session:`, tomationSession)
+        console.log(`[tomation-webext][popup] Session initialized with session:`, tomationSession.value)
         mismatchUrl.value = ''
         expectedUrlMatch.value = ''
         // Optionally, you can store the sessionId in the store if needed for future use
       },
       'tomation-session-connected': ({ sessionId }: any) => {
-        if (tomationSession.value?.id === sessionId) {
-          tomationSession.value.connected = true
-          console.log(`[tomation-webext][popup] Session ${sessionId} is now connected`)
-        }
-        else {
-          console.warn(`[tomation-webext][popup] Received connection event for unknown sessionId ${sessionId}`)
-        }
+        tomationSession.value.connected = true
+        console.log(`[tomation-webext][popup] Session ${sessionId} is now connected`)
       },
       'tomation-url-mismatch': ({ matches, url }: any) => {
         console.warn(`[tomation-webext][popup] URL mismatch detected. Expected: ${matches}, Actual: ${url}`)
@@ -263,16 +257,20 @@ export const useAutomationStore = defineStore('automationStore', () => {
         mismatchUrl.value = url
         expectedUrlMatch.value = matches
       },
-      'tomation-register-test': ({ sessionId, id, action }: any) => {
-        if (tomationSession.value.id === sessionId) {
-          tomationSession.value.automatedTests[id] = {
-            initialAction: action,
-          }
-          console.log(`[tomation-webext][popup] Registered test ${id} for session ${sessionId}`)
-        }
-        else {
-          console.warn(`[tomation-webext][popup] Received register test event for unknown sessionId ${sessionId}`)
-        }
+      'tomation-register-test': ({ sessionId, id }: any) => {
+        tomationSession.value.automatedTests[id] = id
+        console.log(`[tomation-webext][popup] Registered test ${id} for session ${sessionId}`)
+      },
+      'tomation-clear-tests': ({ sessionId }: any) => {
+        console.log(`[tomation-webext][popup] Received clear tests event for session ${sessionId}`)
+        console.log('Current session before clearing tests:', tomationSession.value.id)
+        tomationSession.value.automatedTests = {}
+        console.log(`[tomation-webext][popup] Cleared tests for session ${sessionId}`)
+      },
+      'tomation-test-loaded': ({ sessionId }: any) => {
+        console.log(`[tomation-webext][popup] Received test loaded event for session ${sessionId}`)
+        console.log('Current session before setting testsLoaded to true:', tomationSession.value.id)
+        tomationSession.value.testsLoaded = true
       },
     }
 
@@ -301,7 +299,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
     currentSelectedTest,
     goTo,
     setTabInfo,
-    getTomationSession,
     getTestRun,
     openTest,
     closeTestViewer,

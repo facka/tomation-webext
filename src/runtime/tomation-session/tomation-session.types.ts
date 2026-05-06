@@ -4,4 +4,5 @@ export type TomationSession = {
   tabId: number
   connected: boolean
   automatedTests: Record<string, any>
+  testsLoaded: boolean
 }

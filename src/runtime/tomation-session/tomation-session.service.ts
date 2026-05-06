@@ -36,6 +36,15 @@ export function clearTomationSessionByTabId(tabId: number) {
   return clearSession(session.id)
 }
 
+export function clearTomationSessionTests(tabId: number) {
+  const session = getSessionByTabId(tabId)
+  if (!session) {
+    console.warn(`No session found for tabId ${tabId}. Cannot clear session tests.`)
+    return
+  }
+  return updateSession(session.id, { automatedTests: {} })
+}
+
 export function getTomationSessionByTabId(tabId: number) {
   return getSessionByTabId(tabId)
 }
@@ -48,14 +57,12 @@ export function getTomationSessionsByWorkspaceId(workspaceId: string) {
   return getSessionsByWorkspaceId(workspaceId)
 }
 
-export function registerTestForSessionByTabId(tabId: number, testId: string, initialAction: any) {
+export function registerTestForSessionByTabId(tabId: number, testId: string) {
   const session = getSessionByTabId(tabId)
   if (!session) {
     throw new Error(`Session for tabId ${tabId} not found`)
   }
-  session.automatedTests[testId] = {
-    initialAction,
-  }
+  session.automatedTests[testId] = testId
   updateSession(session.id, { automatedTests: session.automatedTests })
 }
 

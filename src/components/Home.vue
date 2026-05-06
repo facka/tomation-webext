@@ -62,7 +62,6 @@ async function reloadTests() {
 }
 
 async function startProject() {
-  // create a new workspace with the current host and a default name
   const newWorkspace = await sendMessage('sidepanel-to-background', {
     cmd: WorkspaceCmd.Create,
     params: {
@@ -71,7 +70,7 @@ async function startProject() {
       script: newWorkspaceForm.scriptURL.value.trim() || '',
     },
   }, 'background')
-  await reloadTests()
+  // await reloadTests()
   emit('workspaceCreated', newWorkspace as Workspace)
 }
 </script>
