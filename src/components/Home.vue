@@ -118,7 +118,7 @@ async function startProject() {
             <UrlStatus v-if="newWorkspaceForm.scriptURL.value" compact :url="newWorkspaceForm.scriptURL.value" />
           </div>
         </div>
-        <button class="btn w-full" @click="startProject">
+        <button type="submit" class="btn w-full">
           Start tomation project
         </button>
       </form>
