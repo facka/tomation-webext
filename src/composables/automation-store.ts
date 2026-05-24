@@ -39,8 +39,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
   const currentTabHost = ref<string>('')
   const currentSelectedTest = ref<any>(null)
 
-  initializeStore()
-
   async function updateActiveTabId() {
     const res = await useActiveTab().getActiveTab()
     activeTabId.value = res?.tab?.id ?? null
@@ -126,6 +124,11 @@ export const useAutomationStore = defineStore('automationStore', () => {
     }
     console.log(`Getting test run for session ${tomationSession.value.id} and tabId ${tabId}:`, testRun.value)
     return testRun.value
+  }
+
+  function setWorkspace(newWorkspace: Workspace) {
+    console.log('Setting workspace in store:', newWorkspace)
+    workspace.value = newWorkspace
   }
 
   function closeTestViewer() {
@@ -282,6 +285,8 @@ export const useAutomationStore = defineStore('automationStore', () => {
     }
   })
 
+  initializeStore()
+
   return {
     dataError,
     currentActionId,
@@ -295,6 +300,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
     tomationSession,
     testRun,
     workspace,
+    setWorkspace,
     activeTabId,
     currentSelectedTest,
     goTo,

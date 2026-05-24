@@ -6,8 +6,19 @@ import { useAutomationStore } from '@/composables/automation-store'
 
 const sidepanelStore = useAutomationStore()
 
-async function onWorkspaceCreated(newWorkspace: Workspace) {
-  sidepanelStore.workspace = newWorkspace as Workspace
+function onWorkspaceCreated(newWorkspace: Workspace) {
+  try {
+    console.log('saving in store new workspace created:', newWorkspace)
+    console.log('current store state before saving new workspace:', {
+      workspace: sidepanelStore.workspace,
+      tabsInfoById: sidepanelStore.tabsInfoById,
+      activeTabId: sidepanelStore.activeTabId,
+    })
+    console.log('Sidepanel store instance:', sidepanelStore)
+    sidepanelStore.setWorkspace(newWorkspace as Workspace)
+  } catch (error) {
+    console.error('Error setting workspace:', error)
+  }
 }
 </script>
 
