@@ -39,7 +39,11 @@ async function refresh() {
   currentTabHost.value = url ? new URL(url).host : ''
   currentTabTitle.value = tab.title || ''
   newWorkspaceForm.name.value = currentTabTitle.value || ''
-  newWorkspaceForm.scriptURL.value = ''
+  if (url === 'https://facka.github.io/tomation-playground/') {
+    newWorkspaceForm.scriptURL.value = 'http://localhost:5050/tests.bundle.js'
+  } else {
+    newWorkspaceForm.scriptURL.value = ''
+  }
 }
 
 async function reloadTests() {
