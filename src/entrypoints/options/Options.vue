@@ -17,16 +17,22 @@ const sessionToDelete = ref<TomationSession | null>(null)
 const closeTabWhenDeletingSession = ref(false)
 const deletingSession = ref(false)
 const deletingSessionError = ref<string | null>(null)
+const errors = ref<string[]>([])
 // let selectedWorkspaceLoadId = 0
 
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
-  allWorkspaces.value = await sendMessage('options-to-background', {
-    cmd: WorkspaceCmd.GetAll,
-  }, 'background')
+  try {
+    allWorkspaces.value = await sendMessage('options-to-background', {
+      cmd: WorkspaceCmd.GetAll,
+    }, 'background')
 
-  if (allWorkspaces.value.length > 0) {
-    await selectWorkspace(allWorkspaces.value[0])
+    if (allWorkspaces.value.length > 0) {
+      await selectWorkspace(allWorkspaces.value[0])
+    }
+  } catch (error) {
+    console.error('Error loading workspaces in options page', error)
+    errors.value.push(`Error loading workspaces: ${error}`)
   }
 })
 
@@ -34,34 +40,43 @@ async function selectWorkspace(workspace: Workspace) {
   // const loadId = ++selectedWorkspaceLoadId
   selectedWorkspace.value = workspace
   loadingSessionsForSelectedWorkspace.value = true
-  const sessions = await sendMessage('options-to-background', {
-    cmd: TomationSessionCmd.GetByWorkspaceId,
-    params: { workspaceId: workspace.id },
-  }, 'background') as TomationSession[]
+  try { 
+    const sessions = await sendMessage('options-to-background', {
+      cmd: TomationSessionCmd.GetByWorkspaceId,
+      params: { workspaceId: workspace.id },
+    }, 'background') as TomationSession[]
 
-  /*
-  const sessionsWithTestRuns = await Promise.all(
-    sessions.map(async (session) => {
-      const serializedTestRun = await sendMessage('options-to-background', {
-        cmd: TestRunCmd.GetByTabId,
-        params: { tabId: session.tabId },
-      }, 'background')
+    /*
+    const sessionsWithTestRuns = await Promise.all(
+      sessions.map(async (session) => {
+        const serializedTestRun = await sendMessage('options-to-background', {
+          cmd: TestRunCmd.GetByTabId,
+          params: { tabId: session.tabId },
+        }, 'background')
 
-      return {
-        ...session,
-        testRun: serializedTestRun ? testRunFromJSON(serializedTestRun) : null,
-      }
-    }),
-  )
+        return {
+          ...session,
+          testRun: serializedTestRun ? testRunFromJSON(serializedTestRun) : null,
+        }
+      }),
+    )
 
-  if (loadId !== selectedWorkspaceLoadId) {
+    if (loadId !== selectedWorkspaceLoadId) {
+      return
+    }
+    */
+    console.log('Sessions for workspace', workspace.id, sessions)
+
+    sessionsForSelectedWorkspace.value = sessions
+    loadingSessionsForSelectedWorkspace.value = false
+
+  } catch (error) {
+    console.error('Error loading sessions for workspace', workspace.id, error)
+    sessionsForSelectedWorkspace.value = []
+    loadingSessionsForSelectedWorkspace.value = false
+    errors.value.push(`Error loading sessions for workspace ${workspace.id}: ${error}`)
     return
   }
-  */
-  console.log('Sessions for workspace', workspace.id, sessions)
-
-  sessionsForSelectedWorkspace.value = sessions
-  loadingSessionsForSelectedWorkspace.value = false
 }
 
 async function deleteWorkspace(id: string) {
@@ -179,7 +194,13 @@ function getMinifiedTestsFromSession(session: TomationSession) {
             Workspaces
           </div>
 
-          <div v-if="allWorkspaces.length === 0" class="p-4 text-sm text-slate-500">
+          <div v-if="errors.length > 0" class="p-4 space-y-2">
+            <div v-for="(error, index) in errors" :key="index" class="rounded bg-rose-50 p-3 text-sm text-rose-700">
+              {{ error }}
+            </div>
+          </div>
+
+          <div v-if="!errors.length && allWorkspaces.length === 0" class="p-4 text-sm text-slate-500">
             No workspaces found.
           </div>
 
@@ -205,7 +226,7 @@ function getMinifiedTestsFromSession(session: TomationSession) {
           </ul>
         </aside>
 
-        <section class="p-5">
+        <section v-if="!errors.length" class="p-5">
           <div v-if="selectedWorkspace" class="space-y-4">
             <div class="border-b border-slate-200 pb-3">
               <h2 class="text-lg font-semibold text-slate-800">
