@@ -9,6 +9,7 @@ import {
   registerTestForSessionByTabId,
   setTomationSessionConnected,
   setTomationSessionURLMismatch,
+  setupTests,
 } from './tomation-session.service'
 
 export const TomationSessionCmd = {
@@ -21,6 +22,7 @@ export const TomationSessionCmd = {
   GetByWorkspaceId: 'tomation-session-get-by-workspace-id',
   RegisterTest: 'tomation-register-test',
   GetTestById: 'tomation-session-get-test-by-id',
+  SetupTests: 'tomation-session-setup-tests',
 } as const
 
 export type TomationSessionCmdType = (typeof TomationSessionCmd)[keyof typeof TomationSessionCmd]
@@ -69,6 +71,11 @@ export type TomationSessionMessages = {
   [TomationSessionCmd.GetTestById]: {
     params: { testId: string, tabId: number }
     result: any | null
+  },
+
+  [TomationSessionCmd.SetupTests]: {
+    params: { tabId: number }
+    result: void
   }
 }
 
@@ -124,6 +131,10 @@ const handlers: { [K in TomationSessionCmdType]: Handler<K> } = {
   async [TomationSessionCmd.GetTestById](params) {
     return getTestById(params.testId, params.tabId)
   },
+  
+  async [TomationSessionCmd.SetupTests](params) {
+    return setupTests(params.tabId)
+  }
 }
 
 export const tomationSessionHandlers = handlers

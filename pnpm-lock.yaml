@@ -33,8 +33,8 @@ importers:
         specifier: ^3.0.4
         version: 3.0.4(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3))
       tomation:
-        specifier: ^0.0.13
-        version: 0.0.13
+        specifier: ^0.0.14
+        version: 0.0.14
       unocss:
         specifier: ^66.6.8
         version: 66.6.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
@@ -3250,8 +3250,8 @@ packages:
     resolution: {integrity: sha512-41wJyvKep3yT2tyPqX/4blcfybknGB4D+oETKLs7Q76UiPqRpUJK3hr1nxelyYO0PHKVzJwlu0aCeEAsGI6rpw==}
     engines: {node: '>=20'}
 
-  tomation@0.0.13:
-    resolution: {integrity: sha512-nj1CG4fVpov5w9wSB87AFWipzglJPD6whUx0y26JG+4+tlZ/+gNm9ooC3VTA5p0N5p+PgyigjEWf/1eXsb0guQ==}
+  tomation@0.0.14:
+    resolution: {integrity: sha512-n9clkmS4ElNQGbP6wZZk1jxMYZYjhhENoP7i1AhcA+wyEExxqphCwIisaeKpXv+5m6PTRDaFlFtiz20MoADcng==}
 
   toml-eslint-parser@1.0.3:
     resolution: {integrity: sha512-A5F0cM6+mDleacLIEUkmfpkBbnHJFV1d2rprHU2MXNk7mlxHq2zGojA+SRvQD1RoMo9gqjZPWEaKG4v1BQ48lw==}
@@ -6856,7 +6856,7 @@ snapshots:
       '@sindresorhus/base62': 1.0.0
       reserved-identifiers: 1.2.0
 
-  tomation@0.0.13:
+  tomation@0.0.14:
     dependencies:
       uuid: 14.0.0
 

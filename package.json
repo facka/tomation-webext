@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@11.2.2",
   "description": "Tomation WebExt lets you run tomation tests directly in the browser with logs in real time.",
   "scripts": {
     "dev": "wxt",
@@ -25,7 +25,7 @@
     "@wxt-dev/storage": "^1.2.8",
     "dayjs": "^1.11.20",
     "pinia": "^3.0.4",
-    "tomation": "^0.0.13",
+    "tomation": "^0.0.14",
     "unocss": "^66.6.8",
     "unplugin-icons": "^23.0.1",
     "webext-bridge": "^6.0.1"

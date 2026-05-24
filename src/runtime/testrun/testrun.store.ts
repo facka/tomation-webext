@@ -66,6 +66,7 @@ export class InMemoryTestRunStore implements TestRunStore {
       return null
     }
 
+    console.log('Updating action in test run', { tabId, action, testRun })
     const existingAction = testRun.actionsById.get(action.id)
     if (!existingAction) {
       throw new Error('Action not found in test run')

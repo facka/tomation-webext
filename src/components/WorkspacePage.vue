@@ -45,15 +45,11 @@ async function setupTests() {
   const activeTab = (await useActiveTab().getActiveTab())
   try {
     await sendMessage('sidepanel-to-background', {
-      cmd: TomationSessionCmd.ClearForTab,
+      cmd: TomationSessionCmd.SetupTests,
       params: {
         tabId: activeTab.tab.id || 0,
       },
     }, 'background')
-    await sendMessage('sidepanel-to-contentScript', {
-      cmd: 'setup-tests-request',
-      params: {},
-    }, activeTab.destination)
   }
   catch (error) {
     console.error('Error setting up tests:', error)

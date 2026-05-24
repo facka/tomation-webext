@@ -1,4 +1,5 @@
 import { clearSession, createSession, getSessionById, getSessionByTabId, getSessionsByWorkspaceId, updateSession } from './tomation-session.store'
+import { sendMessage } from 'webext-bridge/background'
 
 export function createTomationSession(workspaceId: string, tabId: number) {
   const existingSession = getSessionByTabId(tabId)
@@ -72,4 +73,21 @@ export function getTestById(testId: string, tabId: number) {
     return session.automatedTests[testId]
   }
   return null
+}
+
+export async function setupTests(tabId: number) {
+  const session = getSessionByTabId(tabId)
+  if (!session) {
+    throw new Error(`Session for tabId ${tabId} not found`)
+  }
+  clearTomationSessionTests(tabId)
+  console.log(`[tomation-webext][background] Setting up tests for session ${session.id} in tab ${tabId}`)
+  try {
+    await sendMessage('background-to-contentScript', {
+      cmd: 'setup-tests-request',
+      params: {},
+    }, `content-script@${tabId}`)
+  } catch (error) {
+    console.error(`[tomation-webext][background] Failed to send setup-tests-request to content script in tab ${tabId}`, error)
+  }
 }
