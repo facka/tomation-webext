@@ -46,5 +46,10 @@ export default defineConfig({
       // https://github.com/unocss/unocss
       UnoCSS(),
     ],
+    define: {
+      // Feature flag for messaging system transition
+      // Set to true to enable new typed messaging system; defaults to false (webext-bridge)
+      'import.meta.env.VITE_USE_NEW_MESSAGING': process.env.VITE_USE_NEW_MESSAGING === 'true' ? 'true' : 'false',
+    },
   }),
 })
