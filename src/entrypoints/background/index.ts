@@ -1,4 +1,4 @@
-import { onMessage, sendMessage } from 'webext-bridge/background'
+import { createBackgroundAdapter, logMessagingSystem } from '@/messaging'
 import { WorkspaceCmd, workspaceHandlers } from '@/logic/workspace/workspace.handlers'
 import { TestRunCmd, testrunHandlers } from '@/runtime/testrun/testrun.handlers'
 import { testRunToJSON } from '@/runtime/testrun/testrun.model'
@@ -16,20 +16,31 @@ import { updateSession } from '@/runtime/tomation-session/tomation-session.store
 
 const USE_SIDE_PANEL = true
 
-browser.runtime.onStartup.addListener(async () => {
-  console.log("Service Worker has started.");
+// Create messaging adapter (switches between webext-bridge and new system based on feature flag)
+const messaging = createBackgroundAdapter()
+
+// Register message handlers synchronously at module top-level.
+// This is intentionally OUTSIDE defineBackground so handlers are available
+// the instant the service worker module evaluates — even before defineBackground
+// runs — preventing the race where a content-script message arrives while the
+// service worker is waking up from dormancy.
+registerMessageHandlers()
+console.log('[tomation-webext][background] Service worker module evaluated — message handlers registered.')
+
+browser.runtime.onStartup.addListener(() => {
+  console.log('[tomation-webext][background] onStartup fired — service worker started fresh.')
 });
 
 browser.runtime.onSuspend.addListener(() => {
-  console.log("Service Worker is being suspended.");
+  console.log('[tomation-webext][background] onSuspend fired — service worker is being terminated.')
 });
 
 export default defineBackground(() => {
+  logMessagingSystem('background')
   setupBackgroundEnvironment()
   registerBrowserEventHandlers()
-  registerMessageHandlers()
 
-  console.log('Running background...')
+  console.log('[tomation-webext][background] defineBackground callback executed.')
 })
 
 function setupBackgroundEnvironment() {
@@ -77,10 +88,9 @@ async function sendMessageToPopup(cmd: string, params?: any) {
     const contexts = await browser.runtime.getContexts({
       contextTypes: ['POPUP', 'SIDE_PANEL'] // or 'OPTIONS_PAGE'
     });
-    console.log(`[tomation-webext][background] Extension Popup Views = ${contexts.length}`, { contexts })
     const popupOpen = contexts.length > 0
     if (popupOpen) {
-      await sendMessage('background-to-popup', { cmd, params }, 'popup')
+      await messaging.sendMessage('background-to-popup', { cmd, params }, 'popup')
     }
   }
   catch (err) {
@@ -107,9 +117,9 @@ async function sendTabUpdateToPopup(tabId: number) {
 }
 
 function registerContentToBackgroundHandler() {
-  onMessage('content-to-background', async ({ data, sender }) => {
+  messaging.onMessage('content-to-background', async ({ data, sender }) => {
     const { cmd, params } = (data as any) || {}
-    const { tabId } = sender
+    const tabId = resolveSenderTabId(sender)
     const paramsWithTabId = { ...params, tabId }
 
     const commands: Record<string, (params?: any) => void> = {
@@ -285,7 +295,7 @@ function registerContentToBackgroundHandler() {
 }
 
 function registerOptionsToBackgroundHandler() {
-  onMessage('options-to-background', async ({ data }) => {
+  messaging.onMessage('options-to-background', async ({ data }) => {
     const { cmd, params } = (data as any) || {}
 
     return runSharedBackgroundCommand(cmd, params)
@@ -293,7 +303,7 @@ function registerOptionsToBackgroundHandler() {
 }
 
 function registerSidepanelToBackgroundHandler() {
-  onMessage('sidepanel-to-background', async ({ data }) => {
+  messaging.onMessage('sidepanel-to-background', async ({ data }) => {
     const { cmd, params } = (data as any) || {}
 
     if (cmd === 'close-test-viewer') {
@@ -305,7 +315,7 @@ function registerSidepanelToBackgroundHandler() {
 }
 
 function registerPopupToBackgroundHandler() {
-  onMessage('popup-to-background', ({ data }) => {
+  messaging.onMessage('popup-to-background', ({ data }) => {
     const { cmd, params } = (data as any) || {}
 
     if (cmd === 'close-run-view') {
@@ -349,4 +359,20 @@ async function handleCloseTestViewer(params: any) {
   return testrunHandlers[TestRunCmd.ClearTestRun]({
     tabId,
   })
+}
+
+function resolveSenderTabId(sender: any): number {
+  const fromNativeSender = sender?.tab?.id
+  const fromBridgeSender = sender?.tabId
+  const tabId = typeof fromNativeSender === 'number'
+    ? fromNativeSender
+    : typeof fromBridgeSender === 'number'
+      ? fromBridgeSender
+      : undefined
+
+  if (typeof tabId !== 'number' || Number.isNaN(tabId)) {
+    throw new Error('[tomation-webext][background] Missing tab id in message sender. Expected sender.tab.id or sender.tabId.')
+  }
+
+  return tabId
 }

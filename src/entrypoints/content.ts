@@ -1,5 +1,7 @@
 import type { Workspace } from '@/logic/workspace/workspace.types'
-import { onMessage, sendMessage } from 'webext-bridge/content-script'
+import { createContentAdapter } from '@/messaging'
+
+const messaging = createContentAdapter()
 
 const FROM_INJECTED_MESSAGE_EVENT = 'injectedScript-to-contentScript'
 const TO_INJECTED_MESSAGE_EVENT = 'contentScript-to-injectedScript'
@@ -20,7 +22,7 @@ const FORWARDED_SIDEPANEL_COMMANDS = new Set([
 
 async function sendToBackground(payload: any, event?: MessageEvent) {
   try {
-    return await sendMessage('content-to-background', payload, 'background')
+    return await messaging.sendMessage('content-to-background', payload, 'background')
   }
   catch (err) {
     console.error('[tomation-webext] SendMessageToBackground ERROR', { err, payload, event })
@@ -74,7 +76,7 @@ function registerInjectedToContentBridge() {
   window.addEventListener('message', handleWindowMessage)
 }
 
-function forwardSidepanelMessageToInjectedScript(cmd: string, params: any) {
+function forwardMessageToInjectedScript(cmd: string, params: any) {
   window.postMessage({
     message: TO_INJECTED_MESSAGE_EVENT,
     sender: 'web-extension',
@@ -86,12 +88,12 @@ function forwardSidepanelMessageToInjectedScript(cmd: string, params: any) {
 }
 
 function registerSidepanelToContentBridge() {
-  onMessage('sidepanel-to-contentScript', ({ data }: any) => {
+  messaging.onMessage('sidepanel-to-contentScript', ({ data }: any) => {
     const { cmd, params } = data
 
     if (FORWARDED_SIDEPANEL_COMMANDS.has(cmd)) {
       console.log('[tomation-webext] forwarding message to injected script:', cmd, params)
-      forwardSidepanelMessageToInjectedScript(cmd, params)
+      forwardMessageToInjectedScript(cmd, params)
       return
     }
 
@@ -102,6 +104,20 @@ function registerSidepanelToContentBridge() {
     }
 
     console.log('[tomation-webext] Ignored message that is not for injected script')
+  })
+}
+
+function registerBackgroundToContentBridge() {
+  messaging.onMessage('background-to-contentScript', ({ data }: any) => {
+    const { cmd, params } = data
+    console.log('[tomation-webext] Received message from background:', cmd, params)
+
+    if (cmd === 'setup-tests-request') {
+      forwardMessageToInjectedScript(cmd, params)
+      return
+    }
+
+    console.log('[tomation-webext] Ignored message from background that is not for injected script')
   })
 }
 
@@ -138,6 +154,7 @@ async function bootstrapContentScript() {
 
   registerInjectedToContentBridge()
   registerSidepanelToContentBridge()
+  registerBackgroundToContentBridge()
   tryInjectWorkspaceScript(workspace)
 }
 

@@ -3,12 +3,13 @@ import type { Workspace } from '@/logic/workspace/workspace.types'
 import type { TestRun } from '@/runtime/testrun/testrun.types'
 import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
 import { onMounted, ref } from 'vue'
-import { sendMessage } from 'webext-bridge/options'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
+import { createUIAdapter } from '@/messaging'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
 const allWorkspaces = ref<Workspace[]>([])
+const messaging = createUIAdapter()
 
 const selectedWorkspace = ref<Workspace | null>(null)
 const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
@@ -23,7 +24,7 @@ const errors = ref<string[]>([])
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
   try {
-    allWorkspaces.value = await sendMessage('options-to-background', {
+    allWorkspaces.value = await messaging.sendMessage('options-to-background', {
       cmd: WorkspaceCmd.GetAll,
     }, 'background')
 
@@ -41,7 +42,7 @@ async function selectWorkspace(workspace: Workspace) {
   selectedWorkspace.value = workspace
   loadingSessionsForSelectedWorkspace.value = true
   try { 
-    const sessions = await sendMessage('options-to-background', {
+    const sessions = await messaging.sendMessage('options-to-background', {
       cmd: TomationSessionCmd.GetByWorkspaceId,
       params: { workspaceId: workspace.id },
     }, 'background') as TomationSession[]
@@ -80,7 +81,7 @@ async function selectWorkspace(workspace: Workspace) {
 }
 
 async function deleteWorkspace(id: string) {
-  await sendMessage('options-to-background', {
+  await messaging.sendMessage('options-to-background', {
     cmd: WorkspaceCmd.Delete,
     params: { id },
   }, 'background')
@@ -136,7 +137,7 @@ async function confirmDeleteSession() {
   const sessionId = sessionToDelete.value.id
   const sessionTabId = sessionToDelete.value.tabId
   try {
-    await sendMessage('options-to-background', {
+    await messaging.sendMessage('options-to-background', {
       cmd: TomationSessionCmd.Remove,
       params: {
         tabId: sessionTabId,

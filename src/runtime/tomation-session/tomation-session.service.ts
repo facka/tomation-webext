@@ -1,5 +1,7 @@
 import { clearSession, createSession, getSessionById, getSessionByTabId, getSessionsByWorkspaceId, updateSession } from './tomation-session.store'
-import { sendMessage } from 'webext-bridge/background'
+import { createBackgroundAdapter } from '@/messaging'
+
+const messaging = createBackgroundAdapter()
 
 export function createTomationSession(workspaceId: string, tabId: number) {
   const existingSession = getSessionByTabId(tabId)
@@ -83,7 +85,7 @@ export async function setupTests(tabId: number) {
   clearTomationSessionTests(tabId)
   console.log(`[tomation-webext][background] Setting up tests for session ${session.id} in tab ${tabId}`)
   try {
-    await sendMessage('background-to-contentScript', {
+    await messaging.sendMessage('background-to-contentScript', {
       cmd: 'setup-tests-request',
       params: {},
     }, `content-script@${tabId}`)

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import { sendMessage } from 'webext-bridge/popup'
 import AutomatedTestsTreeNode from '@/components/AutomatedTestsTreeNode.vue'
+import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   tests: any
 }>()
 
 const sidepanelStore = useAutomationStore()
+const messaging = createUIAdapter()
 const query = ref('')
 const visualizationMode = ref<'flat' | 'tree'>('tree')
 const favoriteTestsByWorkspace = useStorage<Record<string, string[]>>('tomation.favoriteTestsByWorkspace', {})
@@ -77,7 +78,7 @@ async function reloadTests() {
   console.log('Reload tests')
   const activeTab = (await useActiveTab().getActiveTab()).destination
   try {
-    await sendMessage('sidepanel-to-contentScript', {
+    await messaging.sendMessage('sidepanel-to-contentScript', {
       cmd: 'reload-tests-request',
       params: {},
     }, activeTab)
@@ -115,7 +116,7 @@ function toggleFavorite(testId: string) {
 
 async function runTest(testId: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'run-test-request',
     params: {
       testId,

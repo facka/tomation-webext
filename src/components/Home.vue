@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import type { Workspace } from '@/logic/workspace/workspace.types'
 import { onMounted, ref, watch } from 'vue'
-import { sendMessage } from 'webext-bridge/popup'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
 import { useActiveTab } from '@/composables/useActiveTab'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
+import { createUIAdapter } from '@/messaging'
 
 const emit = defineEmits<{
   (e: 'workspaceCreated', workspace: Workspace): void
 }>()
 
 const sidepanelStore = useAutomationStore()
+const messaging = createUIAdapter()
 
 const currentTabHost = ref<string>('')
 const currentTabTitle = ref<string>('')
@@ -55,7 +56,7 @@ async function reloadTests() {
     // This will prevent potential race conditions where content script sends old tests results after tests
     // have been reloaded and before state is cleared in background, which can cause old test results to be
     // displayed in sidepanel after tests have been reloaded and before state is cleared in background
-    await sendMessage('sidepanel-to-contentScript', {
+    await messaging.sendMessage('sidepanel-to-contentScript', {
       cmd: 'reload-tests-request',
       params: {},
     }, activeTab)
@@ -66,7 +67,7 @@ async function reloadTests() {
 }
 
 async function startProject() {
-  const newWorkspace = await sendMessage('sidepanel-to-background', {
+  const newWorkspace = await messaging.sendMessage('sidepanel-to-background', {
     cmd: WorkspaceCmd.Create,
     params: {
       name: newWorkspaceForm.name.value.trim(),

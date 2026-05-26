@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ACTION_STATUS } from 'tomation'
-import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '@/components/design-system/Expandable.vue'
+import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   action: any
 }>()
 
 const sidepanelStore = useAutomationStore()
+const messaging = createUIAdapter()
 const expandableElem = ref()
 
 watch(props.action, (newAction) => {
@@ -130,7 +131,7 @@ async function displayHTML() {
 
 async function userAccepted() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'user-accept-request',
     params: {
       context: context.value,
@@ -140,7 +141,7 @@ async function userAccepted() {
 
 async function userRejected() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'user-reject-request',
     params: {
       context: context.value,
@@ -150,7 +151,7 @@ async function userRejected() {
 
 async function skipAction() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'skip-action-request',
     params: {
       context: context.value,
@@ -160,7 +161,7 @@ async function skipAction() {
 
 async function retryAction() {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'retry-action-request',
     params: {
       context: context.value,

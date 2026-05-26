@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { sendMessage } from 'webext-bridge/popup'
 import Expandable from '@/components/design-system/Expandable.vue'
+import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   node: TreeNode
@@ -9,6 +9,7 @@ const props = defineProps<{
 }>()
 
 const sidepanelStore = useAutomationStore()
+const messaging = createUIAdapter()
 
 const node = computed(() => props.node)
 const testId = computed(() => {
@@ -29,7 +30,7 @@ type TreeNode = {
 async function runTest(testId: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
   console.log('Run test Request: ', testId)
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: 'run-test-request',
     params: {
       testId,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { sendMessage } from 'webext-bridge/popup'
 import ActionViewer from '@/components/ActionViewer.vue'
+import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   action: any
@@ -9,6 +9,7 @@ const props = defineProps<{
 const action = computed(() => props.action)
 
 const sidepanelStore = useAutomationStore()
+const messaging = createUIAdapter()
 
 const testStatus = computed(() => sidepanelStore.testRun?.status || '')
 const isFinished = computed(() => ['passed', 'failed'].includes(testStatus.value))
@@ -53,7 +54,7 @@ function closeRunView() {
 async function runAction(action: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
   // sendMessage(action, {}, activeTab)
-  sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-contentScript', {
     cmd: action,
     params: {},
   }, activeTab)

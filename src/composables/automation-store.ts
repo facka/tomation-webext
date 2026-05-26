@@ -3,12 +3,14 @@ import type { TestRun } from '@/runtime/testrun/testrun.types'
 import type { TomationSession } from '@/runtime/tomation-session/tomation-session.types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { onMessage, sendMessage } from 'webext-bridge/popup'
+import { createUIAdapter } from '@/messaging'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
 import { TestRunCmd } from '@/runtime/testrun/testrun.handlers'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 // import { sendChunkedMessage } from 'ext-send-chunked-message'
 import { VIEWS } from '~/logic/views'
+
+const messaging = createUIAdapter()
 
 export const useAutomationStore = defineStore('automationStore', () => {
   const dataError = ref(false)
@@ -64,20 +66,20 @@ export const useAutomationStore = defineStore('automationStore', () => {
     const url = tab.url
     // extract host from url
     currentTabHost.value = url ? new URL(url).host : ''
-    const existentWorkspace: Workspace | null = await sendMessage('sidepanel-to-background', {
+    const existentWorkspace: Workspace | null = await messaging.sendMessage('sidepanel-to-background', {
       cmd: WorkspaceCmd.GetForHost,
       params: { host: currentTabHost.value },
     }, 'background')
     workspace.value = existentWorkspace
     if (existentWorkspace) {
-      const existentSession: TomationSession = await sendMessage('sidepanel-to-background', {
+      const existentSession: TomationSession = await messaging.sendMessage('sidepanel-to-background', {
         cmd: TomationSessionCmd.GetByTabId,
         params: { tabId: tab.id },
       }, 'background')
       tomationSession.value = existentSession
       // get test run for this tab if session exists
       if (existentSession) {
-        const existentTestRun = await sendMessage('sidepanel-to-background', {
+        const existentTestRun = await messaging.sendMessage('sidepanel-to-background', {
           cmd: TestRunCmd.GetByTabId,
           params: { tabId: tab.id },
         }, 'background') as any
@@ -134,7 +136,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
   function closeTestViewer() {
     testRun.value = null
     currentActionId.value = null
-    sendMessage('sidepanel-to-background', {
+    messaging.sendMessage('sidepanel-to-background', {
       cmd: 'close-test-viewer',
       params: {
         sessionId: tomationSession.value.id,
@@ -191,7 +193,7 @@ export const useAutomationStore = defineStore('automationStore', () => {
 
   console.log('Setting up message listeners in automation store...')
 
-  onMessage('background-to-popup', ({ data }: any) => {
+  messaging.onMessage('background-to-popup', ({ data }: any) => {
     const { cmd, params } = data || {}
     console.log('[tomation-webext][popup] received background-to-popup message:', cmd, params)
 

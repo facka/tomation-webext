@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { sendMessage } from 'webext-bridge/popup'
+import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   action: string
 }>()
+const messaging = createUIAdapter()
 
 async function runAction(action: string) {
   const activeTab = (await useActiveTab().getActiveTab()).destination
-  sendMessage(action, {}, activeTab)
+  messaging.sendMessage(action as any, {}, activeTab)
 }
 </script>
 
