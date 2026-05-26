@@ -25,7 +25,7 @@
  * import { createContentAdapter } from '@/messaging'
  *
  * const messaging = createContentAdapter()
- * const response = await messaging.sendMessage('content-to-background', payload, 'background')
+ * const response = await messaging.sendMessage('content-to-background', payload)
  * ```
  *
  * UI contexts (Popup, Sidepanel, Options):
@@ -33,7 +33,7 @@
  * import { createUIAdapter } from '@/messaging'
  *
  * const messaging = createUIAdapter()
- * const response = await messaging.sendMessage('popup-to-background', payload, 'background')
+ * const response = await messaging.sendMessage('popup-to-background', payload)
  * ```
  *
  * Feature flag:
@@ -70,16 +70,20 @@ export type {
   BackgroundToPopupResponse,
   BackgroundToContentScriptRequest,
   BackgroundToContentScriptResponse,
-  SidepanelToContentScriptRequest,
-  SidepanelToContentScriptResponse,
 } from './contracts'
 
 // Adapter layer (enables gradual migration from webext-bridge)
 export {
   createBackgroundAdapter,
+} from './adapters/adapter.background'
+export {
   createContentAdapter,
+} from './adapters/adapter.content'
+export {
   createUIAdapter,
+} from './adapters/adapter.ui'
+export {
   isNewMessagingEnabled,
   logMessagingSystem,
-} from './adapter'
-export type { MessagingAdapter } from './adapter'
+} from './adapters/adapter.runtime'
+export type { MessagingAdapter } from './adapters/adapter.types'

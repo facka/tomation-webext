@@ -130,43 +130,47 @@ async function displayHTML() {
 }
 
 async function userAccepted() {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'user-accept-request',
     params: {
       context: context.value,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 
 async function userRejected() {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'user-reject-request',
     params: {
       context: context.value,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 
 async function skipAction() {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'skip-action-request',
     params: {
       context: context.value,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 
 async function retryAction() {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'retry-action-request',
     params: {
       context: context.value,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 </script>
 

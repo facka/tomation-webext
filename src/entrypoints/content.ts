@@ -6,7 +6,7 @@ const messaging = createContentAdapter()
 const FROM_INJECTED_MESSAGE_EVENT = 'injectedScript-to-contentScript'
 const TO_INJECTED_MESSAGE_EVENT = 'contentScript-to-injectedScript'
 
-const FORWARDED_SIDEPANEL_COMMANDS = new Set([
+const FORWARDED_BACKGROUND_COMMANDS = new Set([
   'next-step-request',
   'reload-tests-request',
   'run-test-request',
@@ -18,6 +18,7 @@ const FORWARDED_SIDEPANEL_COMMANDS = new Set([
   'user-accept-request',
   'user-reject-request',
   'setup-tests-request',
+  'refresh-page',
 ])
 
 async function sendToBackground(payload: any, event?: MessageEvent) {
@@ -87,32 +88,18 @@ function forwardMessageToInjectedScript(cmd: string, params: any) {
   })
 }
 
-function registerSidepanelToContentBridge() {
-  messaging.onMessage('sidepanel-to-contentScript', ({ data }: any) => {
-    const { cmd, params } = data
-
-    if (FORWARDED_SIDEPANEL_COMMANDS.has(cmd)) {
-      console.log('[tomation-webext] forwarding message to injected script:', cmd, params)
-      forwardMessageToInjectedScript(cmd, params)
-      return
-    }
-
-    if (cmd === 'refresh-page') {
-      console.log('[tomation-webext] Reloading page as requested...')
-      window.location.reload()
-      return
-    }
-
-    console.log('[tomation-webext] Ignored message that is not for injected script')
-  })
-}
-
 function registerBackgroundToContentBridge() {
   messaging.onMessage('background-to-contentScript', ({ data }: any) => {
     const { cmd, params } = data
     console.log('[tomation-webext] Received message from background:', cmd, params)
 
-    if (cmd === 'setup-tests-request') {
+    if (FORWARDED_BACKGROUND_COMMANDS.has(cmd)) {
+      if (cmd === 'refresh-page') {
+        console.log('[tomation-webext] Reloading page as requested by background...')
+        window.location.reload()
+        return
+      }
+
       forwardMessageToInjectedScript(cmd, params)
       return
     }
@@ -141,6 +128,9 @@ function tryInjectWorkspaceScript(workspace: Workspace | undefined) {
 async function bootstrapContentScript() {
   console.info('[tomation-webext] Running content script...')
 
+  registerInjectedToContentBridge()
+  registerBackgroundToContentBridge()
+
   const workspace = await getWorkspaceForCurrentPage()
   console.log('[tomation-webext] Current workspace: ', workspace)
   console.log(`[tomation-webext] Script: `, workspace?.script)
@@ -152,9 +142,6 @@ async function bootstrapContentScript() {
     return
   }
 
-  registerInjectedToContentBridge()
-  registerSidepanelToContentBridge()
-  registerBackgroundToContentBridge()
   tryInjectWorkspaceScript(workspace)
 }
 

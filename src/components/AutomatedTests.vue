@@ -76,12 +76,12 @@ function addToTree(node: TreeNode, path: string, pathParts: string[]): void {
 
 async function reloadTests() {
   console.log('Reload tests')
-  const activeTab = (await useActiveTab().getActiveTab()).destination
+  const { tab } = await useActiveTab().getActiveTab()
   try {
-    await messaging.sendMessage('sidepanel-to-contentScript', {
+    await messaging.sendMessage('sidepanel-to-background', {
       cmd: 'reload-tests-request',
-      params: {},
-    }, activeTab)
+      params: { tabId: tab?.id },
+    }, 'background')
   }
   catch (error) {
     console.error('Error reloading tests:', error)
@@ -115,13 +115,14 @@ function toggleFavorite(testId: string) {
 }
 
 async function runTest(testId: string) {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'run-test-request',
     params: {
       testId,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 
 function openTest(testId: string) {

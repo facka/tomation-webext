@@ -49,17 +49,17 @@ async function refresh() {
 
 async function reloadTests() {
   console.log('Reload tests')
-  const activeTab = (await useActiveTab().getActiveTab()).destination
+  const { tab } = await useActiveTab().getActiveTab()
   try {
     // TODO send message to background first.
     // Background should clear state related to tests and then send message to content script to reload tests.
     // This will prevent potential race conditions where content script sends old tests results after tests
     // have been reloaded and before state is cleared in background, which can cause old test results to be
     // displayed in sidepanel after tests have been reloaded and before state is cleared in background
-    await messaging.sendMessage('sidepanel-to-contentScript', {
+    await messaging.sendMessage('sidepanel-to-background', {
       cmd: 'reload-tests-request',
-      params: {},
-    }, activeTab)
+      params: { tabId: tab?.id },
+    }, 'background')
   }
   catch (error) {
     console.error('Error reloading tests:', error)

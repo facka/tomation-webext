@@ -67,13 +67,6 @@ export type BackgroundToContentScriptRequest = CommandMessage
 export type BackgroundToContentScriptResponse = CommandResponse
 
 /**
- * Sidepanel → Content script
- * Used for forwarding test commands to injected script
- */
-export type SidepanelToContentScriptRequest = CommandMessage
-export type SidepanelToContentScriptResponse = CommandResponse
-
-/**
  * Complete contract definition for webext-bridge compatibility
  * Each channel maps: channelName → { request: type, response: type }
  */
@@ -101,10 +94,6 @@ export type MessagingContracts = {
   'background-to-contentScript': {
     request: BackgroundToContentScriptRequest
     response: BackgroundToContentScriptResponse
-  }
-  'sidepanel-to-contentScript': {
-    request: SidepanelToContentScriptRequest
-    response: SidepanelToContentScriptResponse
   }
 }
 

@@ -52,12 +52,11 @@ function closeRunView() {
 }
 
 async function runAction(action: string) {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
-  // sendMessage(action, {}, activeTab)
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  const { tab } = await useActiveTab().getActiveTab()
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: action,
-    params: {},
-  }, activeTab)
+    params: { tabId: tab?.id },
+  })
 }
 </script>
 

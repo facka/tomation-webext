@@ -15,6 +15,20 @@ import {
 import { updateSession } from '@/runtime/tomation-session/tomation-session.store'
 
 const USE_SIDE_PANEL = true
+const FORWARDED_UI_TO_CONTENT_COMMANDS = new Set([
+  'next-step-request',
+  'reload-tests-request',
+  'run-test-request',
+  'pause-test-request',
+  'stop-test-request',
+  'continue-test-request',
+  'retry-action-request',
+  'skip-action-request',
+  'user-accept-request',
+  'user-reject-request',
+  'setup-tests-request',
+  'refresh-page',
+])
 
 // Create messaging adapter (switches between webext-bridge and new system based on feature flag)
 const messaging = createBackgroundAdapter()
@@ -306,6 +320,10 @@ function registerSidepanelToBackgroundHandler() {
   messaging.onMessage('sidepanel-to-background', async ({ data }) => {
     const { cmd, params } = (data as any) || {}
 
+    if (FORWARDED_UI_TO_CONTENT_COMMANDS.has(cmd)) {
+      return forwardUiCommandToContentScript(cmd, params)
+    }
+
     if (cmd === 'close-test-viewer') {
       return handleCloseTestViewer(params)
     }
@@ -314,9 +332,32 @@ function registerSidepanelToBackgroundHandler() {
   })
 }
 
+async function forwardUiCommandToContentScript(cmd: string, params: any) {
+  const tabId = Number(params?.tabId)
+  if (!Number.isInteger(tabId) || tabId <= 0) {
+    throw new Error(`[tomation-webext][background] Missing valid tabId for UI->content command ${cmd}`)
+  }
+
+  const forwardedParams = { ...(params || {}) }
+  delete (forwardedParams as any).tabId
+
+  return messaging.sendMessage(
+    'background-to-contentScript',
+    {
+      cmd,
+      params: forwardedParams,
+    },
+    `content-script@${tabId}`,
+  )
+}
+
 function registerPopupToBackgroundHandler() {
   messaging.onMessage('popup-to-background', ({ data }) => {
     const { cmd, params } = (data as any) || {}
+
+    if (FORWARDED_UI_TO_CONTENT_COMMANDS.has(cmd)) {
+      return forwardUiCommandToContentScript(cmd, params)
+    }
 
     if (cmd === 'close-run-view') {
       console.log('Task viewer closed (popup request)!')

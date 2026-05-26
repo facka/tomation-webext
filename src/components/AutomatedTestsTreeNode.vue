@@ -28,14 +28,15 @@ type TreeNode = {
 }
 
 async function runTest(testId: string) {
-  const activeTab = (await useActiveTab().getActiveTab()).destination
+  const { tab } = await useActiveTab().getActiveTab()
   console.log('Run test Request: ', testId)
-  messaging.sendMessage('sidepanel-to-contentScript', {
+  messaging.sendMessage('sidepanel-to-background', {
     cmd: 'run-test-request',
     params: {
       testId,
+      tabId: tab?.id,
     },
-  }, activeTab)
+  }, 'background')
 }
 
 async function openTest() {
