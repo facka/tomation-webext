@@ -60,14 +60,19 @@ export function createNewMessengerAdapter(
         return response as any
       }
       catch (error: unknown) {
-        console.error('[messaging-adapter] Failed to send message', {
+        const context = {
           channel,
           target,
           oneShotTarget,
           payload,
-          error,
-        })
-        throw error
+        }
+
+        throw new Error(
+          `[messaging-adapter] Failed to send message with context: ${JSON.stringify({
+            ...context,
+            originalError: error instanceof Error ? error.message : String(error),
+          })}`
+        )
       }
     },
 

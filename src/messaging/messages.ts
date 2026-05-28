@@ -193,6 +193,7 @@ export interface Messenger<TOneShot extends OneShotContract, TChannels extends C
 
 export type MessengerOptions = {
 	logger?: Pick<Console, 'warn' | 'error'>
+	context?: string
 }
 
 /**
@@ -216,6 +217,7 @@ export function createMessenger<
 		sender: RuntimeMessageSender,
 		sendResponse: (response: OneShotResponseEnvelope) => void,
 	) => {
+		console.log('[messaging] Received runtime message:', message, 'Sender:', sender, 'context:', options.context)
 		// Route only one-shot envelopes. Ignore all other runtime traffic.
 		const envelope = message as Partial<OneShotRequestEnvelope>
 		if (envelope.__messagingType !== 'one-shot' || typeof envelope.event !== 'string') {

@@ -25,7 +25,9 @@ export function createUIAdapter(): MessagingAdapter {
 
 function createNewUIAdapter(): MessagingAdapter {
   if (!uiMessengerSingleton) {
-    uiMessengerSingleton = createMessenger()
+    uiMessengerSingleton = createMessenger({
+      context: 'ui',
+    })
   }
 
   return createNewMessengerAdapter(uiMessengerSingleton, resolveRuntimeTarget)

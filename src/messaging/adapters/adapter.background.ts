@@ -25,7 +25,9 @@ export function createBackgroundAdapter(): MessagingAdapter {
 
 function createNewBackgroundAdapter(): MessagingAdapter {
   if (!backgroundMessengerSingleton) {
-    backgroundMessengerSingleton = createMessenger()
+    backgroundMessengerSingleton = createMessenger({
+      context: 'background',
+    })
   }
 
   return createNewMessengerAdapter(backgroundMessengerSingleton, resolveOneShotTarget)

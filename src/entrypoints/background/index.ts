@@ -107,8 +107,18 @@ async function sendMessageToPopup(cmd: string, params?: any) {
       await messaging.sendMessage('background-to-popup', { cmd, params }, 'popup')
     }
   }
-  catch (err) {
-    console.error('[tomation-webext][background] Failed to send message to popup', err)
+  catch (error) {
+    const context = {
+      cmd,
+      params,
+    }
+
+    throw new Error(
+      `[messaging-adapter][background] Failed to send message to popup/sidepanel with context: ${JSON.stringify({
+        ...context,
+        originalError: error instanceof Error ? error.message : String(error),
+      })}`
+    )
   }
 }
 
