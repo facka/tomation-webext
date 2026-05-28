@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { createUIAdapter } from '@/messaging'
-
 const props = defineProps<{
   action: string
 }>()
-const messaging = createUIAdapter()
+const sidepanelStore = useAutomationStore()
 
 async function runAction(action: string) {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: action,
-    params: { tabId: tab?.id },
-  })
+  await sidepanelStore.sendCommandForActiveTab(action)
 }
 </script>
 

@@ -6,8 +6,6 @@ import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
 import Test from '@/components/Test.vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
-import { createUIAdapter } from '@/messaging'
-import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
 const props = defineProps<{
   workspace: Workspace
@@ -20,7 +18,6 @@ const tabId = computed<number>(() => props.tabId)
 const loading = computed<boolean>(() => props.loading)
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 
 const urlStatus = ref<string>('')
 
@@ -43,15 +40,8 @@ function reloadPage() {
 }
 
 async function setupTests() {
-  const activeTab = (await useActiveTab().getActiveTab())
   try {
-    console.log('Setting up tests for tab:', activeTab)
-    await messaging.sendMessage('sidepanel-to-background', {
-      cmd: TomationSessionCmd.SetupTests,
-      params: {
-        tabId: activeTab.tab.id || 0,
-      },
-    }, 'background')
+    await sidepanelStore.setupTestsForActiveTab()
   }
   catch (error) {
     console.error('Error setting up tests:', error)

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Expandable from '@/components/design-system/Expandable.vue'
-import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   node: TreeNode
@@ -9,7 +8,6 @@ const props = defineProps<{
 }>()
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 
 const node = computed(() => props.node)
 const testId = computed(() => {
@@ -28,15 +26,8 @@ type TreeNode = {
 }
 
 async function runTest(testId: string) {
-  const { tab } = await useActiveTab().getActiveTab()
   console.log('Run test Request: ', testId)
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'run-test-request',
-    params: {
-      testId,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.runTestForActiveTab(testId)
 }
 
 async function openTest() {

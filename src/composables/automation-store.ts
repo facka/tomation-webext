@@ -101,6 +101,41 @@ export const useAutomationStore = defineStore('automationStore', () => {
     isLoading.value = false
   }
 
+  async function sendCommandToBackground(cmd: string, params: Record<string, any> = {}) {
+    return await messaging.sendMessage('sidepanel-to-background', {
+      cmd,
+      params,
+    }, 'background')
+  }
+
+  async function sendCommandForActiveTab(cmd: string, params: Record<string, any> = {}) {
+    const { tab } = await useActiveTab().getActiveTab()
+    return await sendCommandToBackground(cmd, {
+      ...params,
+      tabId: tab?.id,
+    })
+  }
+
+  async function createWorkspace(params: { name: string, host: string, script: string }) {
+    return await sendCommandToBackground(WorkspaceCmd.Create, {
+      name: params.name,
+      host: params.host,
+      script: params.script,
+    })
+  }
+
+  async function setupTestsForActiveTab() {
+    return await sendCommandForActiveTab(TomationSessionCmd.SetupTests)
+  }
+
+  async function reloadTestsForActiveTab() {
+    return await sendCommandForActiveTab('reload-tests-request')
+  }
+
+  async function runTestForActiveTab(testId: string) {
+    return await sendCommandForActiveTab('run-test-request', { testId })
+  }
+
   function setTabInfo(tabId: number, info: { status: string, url: string }) {
     tabsInfoById.value[tabId] = info
   }
@@ -277,5 +312,11 @@ export const useAutomationStore = defineStore('automationStore', () => {
     getTestRun,
     openTest,
     closeTestViewer,
+    createWorkspace,
+    sendCommandToBackground,
+    sendCommandForActiveTab,
+    setupTestsForActiveTab,
+    reloadTestsForActiveTab,
+    runTestForActiveTab,
   }
 })

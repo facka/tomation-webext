@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
 import AutomatedTestsTreeNode from '@/components/AutomatedTestsTreeNode.vue'
-import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   tests: any
 }>()
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 const query = ref('')
 const visualizationMode = ref<'flat' | 'tree'>('tree')
 const favoriteTestsByWorkspace = useStorage<Record<string, string[]>>('tomation.favoriteTestsByWorkspace', {})
@@ -76,12 +74,8 @@ function addToTree(node: TreeNode, path: string, pathParts: string[]): void {
 
 async function reloadTests() {
   console.log('Reload tests')
-  const { tab } = await useActiveTab().getActiveTab()
   try {
-    await messaging.sendMessage('sidepanel-to-background', {
-      cmd: 'reload-tests-request',
-      params: { tabId: tab?.id },
-    }, 'background')
+    await sidepanelStore.reloadTestsForActiveTab()
   }
   catch (error) {
     console.error('Error reloading tests:', error)
@@ -115,14 +109,7 @@ function toggleFavorite(testId: string) {
 }
 
 async function runTest(testId: string) {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'run-test-request',
-    params: {
-      testId,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.runTestForActiveTab(testId)
 }
 
 function openTest(testId: string) {

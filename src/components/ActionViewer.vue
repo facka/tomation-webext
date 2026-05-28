@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ACTION_STATUS } from 'tomation'
 import Expandable from '@/components/design-system/Expandable.vue'
-import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   action: any
 }>()
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 const expandableElem = ref()
 
 watch(props.action, (newAction) => {
@@ -130,47 +128,27 @@ async function displayHTML() {
 }
 
 async function userAccepted() {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'user-accept-request',
-    params: {
-      context: context.value,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.sendCommandForActiveTab('user-accept-request', {
+    context: context.value,
+  })
 }
 
 async function userRejected() {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'user-reject-request',
-    params: {
-      context: context.value,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.sendCommandForActiveTab('user-reject-request', {
+    context: context.value,
+  })
 }
 
 async function skipAction() {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'skip-action-request',
-    params: {
-      context: context.value,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.sendCommandForActiveTab('skip-action-request', {
+    context: context.value,
+  })
 }
 
 async function retryAction() {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: 'retry-action-request',
-    params: {
-      context: context.value,
-      tabId: tab?.id,
-    },
-  }, 'background')
+  await sidepanelStore.sendCommandForActiveTab('retry-action-request', {
+    context: context.value,
+  })
 }
 </script>
 

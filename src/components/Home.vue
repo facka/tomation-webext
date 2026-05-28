@@ -4,15 +4,12 @@ import { onMounted, ref, watch } from 'vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
 import { useActiveTab } from '@/composables/useActiveTab'
-import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
-import { createUIAdapter } from '@/messaging'
 
 const emit = defineEmits<{
   (e: 'workspaceCreated', workspace: Workspace): void
 }>()
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 
 const currentTabHost = ref<string>('')
 const currentTabTitle = ref<string>('')
@@ -49,17 +46,13 @@ async function refresh() {
 
 async function reloadTests() {
   console.log('Reload tests')
-  const { tab } = await useActiveTab().getActiveTab()
   try {
     // TODO send message to background first.
     // Background should clear state related to tests and then send message to content script to reload tests.
     // This will prevent potential race conditions where content script sends old tests results after tests
     // have been reloaded and before state is cleared in background, which can cause old test results to be
     // displayed in sidepanel after tests have been reloaded and before state is cleared in background
-    await messaging.sendMessage('sidepanel-to-background', {
-      cmd: 'reload-tests-request',
-      params: { tabId: tab?.id },
-    }, 'background')
+    await sidepanelStore.reloadTestsForActiveTab()
   }
   catch (error) {
     console.error('Error reloading tests:', error)
@@ -67,14 +60,11 @@ async function reloadTests() {
 }
 
 async function startProject() {
-  const newWorkspace = await messaging.sendMessage('sidepanel-to-background', {
-    cmd: WorkspaceCmd.Create,
-    params: {
-      name: newWorkspaceForm.name.value.trim(),
-      host: currentTabHost.value,
-      script: newWorkspaceForm.scriptURL.value.trim() || '',
-    },
-  }, 'background')
+  const newWorkspace = await sidepanelStore.createWorkspace({
+    name: newWorkspaceForm.name.value.trim(),
+    host: currentTabHost.value,
+    script: newWorkspaceForm.scriptURL.value.trim() || '',
+  })
   // await reloadTests()
   emit('workspaceCreated', newWorkspace as Workspace)
 }

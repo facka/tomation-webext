@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ActionViewer from '@/components/ActionViewer.vue'
-import { createUIAdapter } from '@/messaging'
 
 const props = defineProps<{
   action: any
@@ -9,7 +8,6 @@ const props = defineProps<{
 const action = computed(() => props.action)
 
 const sidepanelStore = useAutomationStore()
-const messaging = createUIAdapter()
 
 const testStatus = computed(() => sidepanelStore.testRun?.status || '')
 const isFinished = computed(() => ['passed', 'failed'].includes(testStatus.value))
@@ -52,11 +50,7 @@ function closeRunView() {
 }
 
 async function runAction(action: string) {
-  const { tab } = await useActiveTab().getActiveTab()
-  messaging.sendMessage('sidepanel-to-background', {
-    cmd: action,
-    params: { tabId: tab?.id },
-  })
+  await sidepanelStore.sendCommandForActiveTab(action)
 }
 </script>
 
