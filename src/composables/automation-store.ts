@@ -146,39 +146,6 @@ export const useAutomationStore = defineStore('automationStore', () => {
     goTo(VIEWS.MAIN)
   }
 
-  /*
-  function setData(data: any) {
-    console.log('Store.setData(): Automated Tests: ', data.automatedTests)
-    automatedTests.value = data.automatedTests
-    actionsById.value = data.actionsById
-  } */
-
-  /*
-  async function getLargeDataFromBackground() {
-    try {
-      const largeData = await sendChunkedMessage('get-large-data')
-      return JSON.parse(largeData)
-    }
-    catch (error) {
-      console.error('Error fetching large data:', error)
-      return null
-    }
-  }
-*/
-
-  /*
-  async function refreshData() {
-    console.log('Refreshing data...')
-    const data = await getLargeDataFromBackground()
-    console.log('Data fetched:', data)
-    if (data) {
-      setData(data)
-    }
-    else {
-      dataError.value = true
-    }
-  }
-*/
   // refreshData()
 
   function goTo(viewName: VIEWS, params?: any) {
