@@ -60,7 +60,13 @@ export function createNewMessengerAdapter(
         return response as any
       }
       catch (error: unknown) {
-        console.error(`[messaging-adapter] Failed to send message on channel ${channel}:`, error)
+        console.error('[messaging-adapter] Failed to send message', {
+          channel,
+          target,
+          oneShotTarget,
+          payload,
+          error,
+        })
         throw error
       }
     },
