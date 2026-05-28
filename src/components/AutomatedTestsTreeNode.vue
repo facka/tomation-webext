@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Expandable from '@/components/design-system/Expandable.vue'
+import { runTestForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const props = defineProps<{
   node: TreeNode
@@ -27,7 +28,7 @@ type TreeNode = {
 
 async function runTest(testId: string) {
   console.log('Run test Request: ', testId)
-  await sidepanelStore.runTestForActiveTab(testId)
+  await runTestForActiveTab(testId)
 }
 
 async function openTest() {

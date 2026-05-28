@@ -6,6 +6,7 @@ import TaskExecutionViewer from '@/components/TaskExecutionViewer.vue'
 import Test from '@/components/Test.vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
+import { setupTestsForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const props = defineProps<{
   workspace: Workspace
@@ -41,7 +42,7 @@ function reloadPage() {
 
 async function setupTests() {
   try {
-    await sidepanelStore.setupTestsForActiveTab()
+    await setupTestsForActiveTab()
   }
   catch (error) {
     console.error('Error setting up tests:', error)

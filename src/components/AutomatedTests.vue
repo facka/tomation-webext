@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
 import AutomatedTestsTreeNode from '@/components/AutomatedTestsTreeNode.vue'
+import { reloadTestsForActiveTab, runTestForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const props = defineProps<{
   tests: any
@@ -75,7 +76,7 @@ function addToTree(node: TreeNode, path: string, pathParts: string[]): void {
 async function reloadTests() {
   console.log('Reload tests')
   try {
-    await sidepanelStore.reloadTestsForActiveTab()
+    await reloadTestsForActiveTab()
   }
   catch (error) {
     console.error('Error reloading tests:', error)
@@ -109,7 +110,7 @@ function toggleFavorite(testId: string) {
 }
 
 async function runTest(testId: string) {
-  await sidepanelStore.runTestForActiveTab(testId)
+  await runTestForActiveTab(testId)
 }
 
 function openTest(testId: string) {

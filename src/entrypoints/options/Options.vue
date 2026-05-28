@@ -5,11 +5,10 @@ import type { TomationSession } from '@/runtime/tomation-session/tomation-sessio
 import { onMounted, ref } from 'vue'
 import logo from '@/assets/icon.png'
 import { WorkspaceCmd } from '@/logic/workspace/workspace.handlers'
-import { createUIAdapter } from '@/messaging'
+import { sendOptionsToBackground } from './bootstrapMessaging'
 import { TomationSessionCmd } from '@/runtime/tomation-session/tomation-session.handlers'
 
 const allWorkspaces = ref<Workspace[]>([])
-const messaging = createUIAdapter()
 
 const selectedWorkspace = ref<Workspace | null>(null)
 const sessionsForSelectedWorkspace = ref<TomationSession[]>([])
@@ -24,9 +23,7 @@ const errors = ref<string[]>([])
 onMounted(async () => {
   console.info('[tomation-webext] Options mounted')
   try {
-    allWorkspaces.value = await messaging.sendMessage('options-to-background', {
-      cmd: WorkspaceCmd.GetAll,
-    }, 'background')
+    allWorkspaces.value = await sendOptionsToBackground(WorkspaceCmd.GetAll)
 
     if (allWorkspaces.value.length > 0) {
       await selectWorkspace(allWorkspaces.value[0])
@@ -42,10 +39,9 @@ async function selectWorkspace(workspace: Workspace) {
   selectedWorkspace.value = workspace
   loadingSessionsForSelectedWorkspace.value = true
   try { 
-    const sessions = await messaging.sendMessage('options-to-background', {
-      cmd: TomationSessionCmd.GetByWorkspaceId,
-      params: { workspaceId: workspace.id },
-    }, 'background') as TomationSession[]
+    const sessions = await sendOptionsToBackground(TomationSessionCmd.GetByWorkspaceId, {
+      workspaceId: workspace.id,
+    }) as TomationSession[]
 
     /*
     const sessionsWithTestRuns = await Promise.all(
@@ -81,10 +77,7 @@ async function selectWorkspace(workspace: Workspace) {
 }
 
 async function deleteWorkspace(id: string) {
-  await messaging.sendMessage('options-to-background', {
-    cmd: WorkspaceCmd.Delete,
-    params: { id },
-  }, 'background')
+  await sendOptionsToBackground(WorkspaceCmd.Delete, { id })
   allWorkspaces.value = allWorkspaces.value.filter(ws => ws.id !== id)
 
   if (selectedWorkspace.value?.id === id) {
@@ -137,13 +130,10 @@ async function confirmDeleteSession() {
   const sessionId = sessionToDelete.value.id
   const sessionTabId = sessionToDelete.value.tabId
   try {
-    await messaging.sendMessage('options-to-background', {
-      cmd: TomationSessionCmd.Remove,
-      params: {
-        tabId: sessionTabId,
-        closeTab: closeTabWhenDeletingSession.value,
-      },
-    }, 'background')
+    await sendOptionsToBackground(TomationSessionCmd.Remove, {
+      tabId: sessionTabId,
+      closeTab: closeTabWhenDeletingSession.value,
+    })
 
     sessionsForSelectedWorkspace.value = sessionsForSelectedWorkspace.value.filter(s => s.id !== sessionId)
     cancelDeleteSessionDialog()

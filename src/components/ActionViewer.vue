@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ACTION_STATUS } from 'tomation'
 import Expandable from '@/components/design-system/Expandable.vue'
+import { sendCommandForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const props = defineProps<{
   action: any
@@ -128,25 +129,25 @@ async function displayHTML() {
 }
 
 async function userAccepted() {
-  await sidepanelStore.sendCommandForActiveTab('user-accept-request', {
+  await sendCommandForActiveTab('user-accept-request', {
     context: context.value,
   })
 }
 
 async function userRejected() {
-  await sidepanelStore.sendCommandForActiveTab('user-reject-request', {
+  await sendCommandForActiveTab('user-reject-request', {
     context: context.value,
   })
 }
 
 async function skipAction() {
-  await sidepanelStore.sendCommandForActiveTab('skip-action-request', {
+  await sendCommandForActiveTab('skip-action-request', {
     context: context.value,
   })
 }
 
 async function retryAction() {
-  await sidepanelStore.sendCommandForActiveTab('retry-action-request', {
+  await sendCommandForActiveTab('retry-action-request', {
     context: context.value,
   })
 }

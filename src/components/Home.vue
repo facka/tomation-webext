@@ -4,6 +4,7 @@ import { onMounted, ref, watch } from 'vue'
 import UrlStatus from '@/components/UrlStatus.vue'
 import { useAutomationStore } from '@/composables/automation-store'
 import { useActiveTab } from '@/composables/useActiveTab'
+import { createWorkspace, reloadTestsForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const emit = defineEmits<{
   (e: 'workspaceCreated', workspace: Workspace): void
@@ -52,7 +53,7 @@ async function reloadTests() {
     // This will prevent potential race conditions where content script sends old tests results after tests
     // have been reloaded and before state is cleared in background, which can cause old test results to be
     // displayed in sidepanel after tests have been reloaded and before state is cleared in background
-    await sidepanelStore.reloadTestsForActiveTab()
+    await reloadTestsForActiveTab()
   }
   catch (error) {
     console.error('Error reloading tests:', error)
@@ -60,7 +61,7 @@ async function reloadTests() {
 }
 
 async function startProject() {
-  const newWorkspace = await sidepanelStore.createWorkspace({
+  const newWorkspace = await createWorkspace({
     name: newWorkspaceForm.name.value.trim(),
     host: currentTabHost.value,
     script: newWorkspaceForm.scriptURL.value.trim() || '',

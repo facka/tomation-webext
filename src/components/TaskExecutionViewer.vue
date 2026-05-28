@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ActionViewer from '@/components/ActionViewer.vue'
+import { closeTestViewer, sendCommandForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
 
 const props = defineProps<{
   action: any
@@ -46,11 +47,15 @@ const statusClass = computed(() => {
 })
 
 function closeRunView() {
+  void closeTestViewer({
+    sessionId: sidepanelStore.tomationSession.id,
+    tabId: sidepanelStore.tomationSession.tabId,
+  })
   sidepanelStore.closeTestViewer()
 }
 
 async function runAction(action: string) {
-  await sidepanelStore.sendCommandForActiveTab(action)
+  await sendCommandForActiveTab(action)
 }
 </script>
 

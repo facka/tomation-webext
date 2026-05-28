@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { sendCommandForActiveTab } from '@/entrypoints/sidepanel/messaging.client'
+
 const props = defineProps<{
   action: string
 }>()
-const sidepanelStore = useAutomationStore()
 
 async function runAction(action: string) {
-  await sidepanelStore.sendCommandForActiveTab(action)
+  await sendCommandForActiveTab(action)
 }
 </script>
 
